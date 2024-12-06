@@ -11,7 +11,9 @@ describe('OrchestratorController', () => {
       providers: [OrchestratorService],
     }).compile();
 
-    orchestratorController = app.get<OrchestratorController>(OrchestratorController);
+    orchestratorController = app.get<OrchestratorController>(
+      OrchestratorController,
+    );
   });
 
   describe('root', () => {
