@@ -2,19 +2,20 @@ name: docuxtract-services
 
 services:
   email-int:
+    container_name: email-int
     depends_on:
       - rabbitmq
       - postgres
     build:
-      context: ..
-      dockerfile: ./apps/email-int/Dockerfile
-      target: build
+      context: .
+      dockerfile: ./apps/email-int/Dockerfile.dev
     command: pnpm start:dev email-int
     env_file:
-      - ../apps/email-int/.env
+      - ./apps/email-int/.env
     volumes:
       - .:/app
       - /app/node_modules
     ports:
       - 3000:3000
+      - 9229:9229
   

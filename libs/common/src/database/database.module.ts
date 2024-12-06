@@ -7,8 +7,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
+        type: 'postgres',
         url: configService.get<string>('DB_CONNECTION_STRING'),
-        entities: [],
         synchronize: true,
       }),
     }),
