@@ -14,8 +14,8 @@ import { RmqModule } from '@libs/common';
       validationSchema: Joi.object({
         CLERK_SECRET_KEY: Joi.string().required(),
         CLERK_PUBLISHABLE_KEY: Joi.string().required(),
+        CLERK_AUTHORIZED_PARTIES: Joi.array(),
         RABBIT_MQ_URL: Joi.string().required(),
-        RABBIT_MQ_AUTH_QUEUE: Joi.string().required(),
       }),
     }),
   ],

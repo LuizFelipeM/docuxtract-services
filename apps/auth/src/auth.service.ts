@@ -30,7 +30,9 @@ export class AuthService {
     try {
       return await verifyToken(token, {
         secretKey: this.configService.get<string>('CLERK_SECRET_KEY'),
-        // Add authorizedParties in the future
+        authorizedParties: this.configService.get<string[]>(
+          'CLERK_AUTHORIZED_PARTIES',
+        ),
       });
     } catch (err) {
       throw new UnauthorizedException('Invalid or expired token');
@@ -43,27 +45,5 @@ export class AuthService {
     } catch (error) {
       throw new UnauthorizedException('User not found');
     }
-  }
-
-  async getUsers(): Promise<any> {
-    try {
-      const user = await this.clerkClient.users.getUserList();
-      return user;
-    } catch (error) {
-      throw new UnauthorizedException('User not found');
-    }
-  }
-
-  async getUserDetails(userId: string): Promise<any> {
-    try {
-      const user = await this.clerkClient.users.getUser(userId);
-      return user;
-    } catch (error) {
-      throw new UnauthorizedException('User not found');
-    }
-  }
-
-  getHello(): string {
-    return 'Hello World!';
   }
 }

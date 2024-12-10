@@ -19,7 +19,6 @@ import { Inbox } from './entities/inbox.entity';
       validationSchema: Joi.object({
         DB_CONNECTION_STRING: Joi.string().required(),
         RABBIT_MQ_URL: Joi.string().required(),
-        RABBIT_MQ_EMAIL_INT_QUEUE: Joi.string().required(),
       }),
     }),
   ],
