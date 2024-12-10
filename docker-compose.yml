@@ -1,6 +1,24 @@
 name: docuxtract-services
 
 services:
+  auth:
+    container_name: auth
+    depends_on:
+      - rabbitmq
+      - postgres
+    build:
+      context: .
+      dockerfile: ./apps/auth/Dockerfile.dev
+    command: pnpm start:debug auth
+    env_file:
+      - ./apps/auth/.env
+    volumes:
+      - ./libs:/app/libs
+      - ./apps/auth:/app/apps/auth
+    ports:
+      - 3000:3000
+      - 9230:9229
+
   orchestrator:
     container_name: orchestrator
     depends_on:
@@ -9,16 +27,15 @@ services:
     build:
       context: .
       dockerfile: ./apps/orchestrator/Dockerfile.dev
-    command: pnpm start:dev orchestrator
+    command: pnpm start:debug orchestrator
     env_file:
       - ./apps/orchestrator/.env
     volumes:
       - ./libs:/app/libs
       - ./apps/orchestrator:/app/apps/orchestrator
-      # - /app/node_modules
     ports:
-      - 3000:3000
-      - 9230:9229
+      - 3001:3000
+      - 9231:9229
   
   email-int:
     container_name: email-int
@@ -28,14 +45,13 @@ services:
     build:
       context: .
       dockerfile: ./apps/email-int/Dockerfile.dev
-    command: pnpm start:dev email-int
+    command: pnpm start:debug email-int
     env_file:
       - ./apps/email-int/.env
     volumes:
       - ./apps/email-int:/app/apps/email-int
       - ./libs:/app/libs
-      # - /app/node_modules
     ports:
-      - 3001:3000
-      - 9231:9229
+      - 3002:3000
+      - 9232:9229
   

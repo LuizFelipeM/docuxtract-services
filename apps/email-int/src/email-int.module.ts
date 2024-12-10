@@ -3,12 +3,16 @@ import { Module } from '@nestjs/common';
 import { EmailIntController } from './email-int.controller';
 import { EmailIntService } from './email-int.service';
 import { ConfigModule } from '@nestjs/config';
-import { DatabaseModule, RmqModule } from '@libs/common';
+import { AuthModule, DatabaseModule, RmqModule } from '@libs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Inbox } from './entitties/inbox.entity';
+import { Inbox } from './entities/inbox.entity';
 
 @Module({
   imports: [
+    RmqModule,
+    AuthModule,
+    DatabaseModule,
+    TypeOrmModule.forFeature([Inbox]),
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: './apps/email-int/.env',
@@ -18,9 +22,6 @@ import { Inbox } from './entitties/inbox.entity';
         RABBIT_MQ_EMAIL_INT_QUEUE: Joi.string().required(),
       }),
     }),
-    DatabaseModule,
-    TypeOrmModule.forFeature([Inbox]),
-    RmqModule,
   ],
   controllers: [EmailIntController],
   providers: [EmailIntService],

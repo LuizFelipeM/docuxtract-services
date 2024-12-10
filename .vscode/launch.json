@@ -7,9 +7,22 @@
 		{
 			"type": "node",
 			"request": "attach",
-			"name": "Docker: Attach to orchestrator",
+			"name": "Docker: Attach to auth",
 			"address": "localhost",
 			"port": 9230,
+			"localRoot": "${workspaceFolder}/apps/auth",
+			"remoteRoot": "/app/apps/auth",
+			"restart": true,
+			"skipFiles": [
+				"<node_internals>/**"
+			]
+		},
+		{
+			"type": "node",
+			"request": "attach",
+			"name": "Docker: Attach to orchestrator",
+			"address": "localhost",
+			"port": 9231,
 			"localRoot": "${workspaceFolder}/apps/orchestrator",
 			"remoteRoot": "/app/apps/orchestrator",
 			"restart": true,
@@ -22,7 +35,7 @@
 			"request": "attach",
 			"name": "Docker: Attach to email-int",
 			"address": "localhost",
-			"port": 9230,
+			"port": 9232,
 			"localRoot": "${workspaceFolder}/apps/email-int",
 			"remoteRoot": "/app/apps/email-int",
 			"restart": true,
