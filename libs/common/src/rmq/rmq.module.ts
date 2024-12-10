@@ -2,7 +2,7 @@ import { DynamicModule, Module } from '@nestjs/common';
 import { RmqService } from './rmq.service';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { ConfigService } from '@nestjs/config';
-import { Services } from '@libs/contracts';
+import { Services, ServicesConfigs } from '@libs/contracts';
 
 interface RmqModuleOptions {
   name: Services;
@@ -27,9 +27,7 @@ export class RmqModule {
               transport: Transport.RMQ,
               options: {
                 urls: [configService.get<string>('RABBIT_MQ_URL')],
-                queue: configService.get<string>(
-                  `RABBIT_MQ_${options.name}_QUEUE`,
-                ),
+                queue: ServicesConfigs[options.name].queue,
               },
             }),
           },
@@ -45,7 +43,7 @@ export class RmqModule {
               transport: Transport.RMQ,
               options: {
                 urls: [configService.get<string>('RABBIT_MQ_URL')],
-                queue: configService.get<string>(`RABBIT_MQ_${name}_QUEUE`),
+                queue: ServicesConfigs[name].queue,
               },
             }),
           },

@@ -8,7 +8,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
-import { tap, catchError } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
@@ -18,16 +18,18 @@ export class JwtAuthGuard implements CanActivate {
     @Inject(Services.Auth) private readonly authClient: ClientProxy,
   ) {}
 
-  canActivate(ctx: ExecutionContext) {
+  async canActivate(ctx: ExecutionContext): Promise<boolean> {
     const authorization = this.getAuthorization(ctx);
-    return this.authClient.send('verify', { authorization }).pipe(
-      tap(this.addUser(ctx)),
-      catchError((err) => {
-        console.log(err);
-        this.logger.error(err);
-        throw new UnauthorizedException();
-      }),
-    );
+    try {
+      const user = await firstValueFrom(
+        this.authClient.send({ cmd: 'auth.verify' }, { authorization }),
+      );
+      this.addUser(ctx, user);
+      return true;
+    } catch (err) {
+      this.logger.error(err);
+      throw new UnauthorizedException();
+    }
   }
 
   private getAuthorization(ctx: ExecutionContext): string {
@@ -46,21 +48,18 @@ export class JwtAuthGuard implements CanActivate {
     }
   }
 
-  private addUser(ctx: ExecutionContext) {
-    return (user) => {
-      console.log(user);
-      switch (ctx.getType()) {
-        case 'http':
-          ctx.switchToHttp().getRequest().user = user;
-          return;
+  private addUser(ctx: ExecutionContext, user) {
+    switch (ctx.getType()) {
+      case 'http':
+        ctx.switchToHttp().getRequest().user = user;
+        break;
 
-        case 'rpc':
-          ctx.switchToRpc().getData().user = user;
-          return;
+      case 'rpc':
+        ctx.switchToRpc().getData().user = user;
+        break;
 
-        default:
-          throw new Error(`Unsupported ${ctx.getType()} request type`);
-      }
-    };
+      default:
+        throw new Error(`Unsupported ${ctx.getType()} request type`);
+    }
   }
 }
