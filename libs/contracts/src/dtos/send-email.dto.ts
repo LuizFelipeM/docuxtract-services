@@ -1,6 +1,6 @@
 import { IsArray, IsNotEmpty, IsString } from 'class-validator';
 
-export class SendEmailRequest {
+export class SendEmailDto {
   @IsString()
   @IsNotEmpty()
   receipient: string;

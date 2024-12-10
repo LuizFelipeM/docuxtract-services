@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
-import { SendEmailRequest } from '../dto/send-email.request';
+import { SendEmailDto } from '../../../libs/contracts/src/dtos/send-email.dto';
 import { Services } from '@libs/contracts';
 
 @Injectable()
@@ -9,7 +9,7 @@ export class OrchestratorService {
     @Inject(Services.EmailInt) private readonly emailIntClient: ClientProxy,
   ) {}
 
-  async sendEmail(request: SendEmailRequest): Promise<void> {
+  async sendEmail(request: SendEmailDto): Promise<void> {
     try {
       this.emailIntClient.emit('email.send', {
         request,

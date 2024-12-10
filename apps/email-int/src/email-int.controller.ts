@@ -1,18 +1,11 @@
-import { Controller, Get, Logger, UseGuards } from '@nestjs/common';
+import { Controller, Get, UseGuards } from '@nestjs/common';
 import { EmailIntService } from './email-int.service';
-import {
-  Ctx,
-  EventPattern,
-  MessagePattern,
-  Payload,
-  RmqContext,
-} from '@nestjs/microservices';
+import { Ctx, EventPattern, Payload, RmqContext } from '@nestjs/microservices';
 import { JwtAuthGuard, RmqService } from '@libs/common';
+import { SendEmailDto } from '@libs/contracts/dtos/send-email.dto';
 
 @Controller()
 export class EmailIntController {
-  private readonly logger = new Logger(EmailIntController.name);
-
   constructor(
     private readonly emailIntService: EmailIntService,
     private readonly rmqService: RmqService,
@@ -25,16 +18,9 @@ export class EmailIntController {
 
   @EventPattern('email.send')
   // @UseGuards(JwtAuthGuard)
-  async handleSendEmail(@Payload() data: any, @Ctx() ctx: RmqContext) {
-    console.log('data', data);
+  async handleSendEmail(@Payload() data: SendEmailDto, @Ctx() ctx: RmqContext) {
+    console.log(data);
     this.emailIntService.sendEmail(data);
     this.rmqService.ack(ctx);
-  }
-
-  @MessagePattern({ cmd: 'email.test' })
-  async test(@Payload() data: any, @Ctx() ctx: RmqContext): Promise<string> {
-    console.log('data', data);
-    this.rmqService.ack(ctx);
-    return JSON.stringify(data);
   }
 }

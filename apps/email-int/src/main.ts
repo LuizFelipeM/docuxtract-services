@@ -2,11 +2,13 @@ import { NestFactory } from '@nestjs/core';
 import { EmailIntModule } from './email-int.module';
 import { ConfigService } from '@nestjs/config';
 import { Transport } from '@nestjs/microservices';
+import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
   const app = await NestFactory.create(EmailIntModule);
   const configService = app.get<ConfigService>(ConfigService);
 
+  app.useGlobalPipes(new ValidationPipe());
   app.connectMicroservice({
     transport: Transport.RMQ,
     options: {
