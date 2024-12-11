@@ -2,7 +2,6 @@ import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import {
   ClerkClient,
   createClerkClient,
-  Token,
   User,
   verifyToken,
 } from '@clerk/backend';

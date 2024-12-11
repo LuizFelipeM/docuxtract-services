@@ -6,10 +6,10 @@ import { ConfigModule } from '@nestjs/config';
 import { AuthModule, DatabaseModule, RmqModule } from '@libs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Inbox } from './entities/inbox.entity';
+import { Exchange } from '@libs/contracts';
 
 @Module({
   imports: [
-    RmqModule,
     AuthModule,
     DatabaseModule,
     TypeOrmModule.forFeature([Inbox]),
@@ -21,6 +21,7 @@ import { Inbox } from './entities/inbox.entity';
         RABBIT_MQ_URL: Joi.string().required(),
       }),
     }),
+    RmqModule.forRoot({ exchanges: [Exchange.Commands, Exchange.Events] }),
   ],
   controllers: [EmailIntController],
   providers: [EmailIntService],

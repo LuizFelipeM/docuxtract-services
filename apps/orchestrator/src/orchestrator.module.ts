@@ -4,12 +4,13 @@ import { OrchestratorController } from './orchestrator.controller';
 import { OrchestratorService } from './orchestrator.service';
 import { AuthModule, RmqModule } from '@libs/common';
 import { ConfigModule } from '@nestjs/config';
-import { Services } from '@libs/contracts';
+import { Exchange, Services } from '@libs/contracts';
+import { RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
 
 @Module({
   imports: [
-    AuthModule,
-    RmqModule.register([{ name: Services.EmailInt }]),
+    // AuthModule,
+    // RmqModule.register([{ name: Services.EmailInt }]),
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: './apps/orchestrator/.env',
@@ -18,6 +19,22 @@ import { Services } from '@libs/contracts';
         RABBIT_MQ_URL: Joi.string().required(),
       }),
     }),
+
+    // RabbitMQModule.forRoot(RabbitMQModule, {
+    //   uri: 'amqp://admin:password@rabbitmq:5672/',
+    //   exchanges: [
+    //     {
+    //       name: 'commands',
+    //       type: 'topic',
+    //     },
+    //     {
+    //       name: 'events',
+    //       type: 'topic',
+    //     },
+    //   ],
+    // }),
+
+    RmqModule.forRoot({ exchanges: [Exchange.Commands, Exchange.Events] }),
   ],
   controllers: [OrchestratorController],
   providers: [OrchestratorService],

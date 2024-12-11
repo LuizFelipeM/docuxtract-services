@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
 import { RmqModule } from '../rmq/rmq.module';
-import { Services } from '@libs/contracts';
+import { Exchange } from '@libs/contracts';
 
 @Module({
-  imports: [RmqModule.register({ name: Services.Auth })],
+  imports: [RmqModule.forRoot({ exchanges: [Exchange.Commands] })],
   exports: [RmqModule],
 })
 export class AuthModule {}

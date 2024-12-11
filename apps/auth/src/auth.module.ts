@@ -4,10 +4,10 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { ConfigModule } from '@nestjs/config';
 import { RmqModule } from '@libs/common';
+import { Exchange } from '@libs/contracts';
 
 @Module({
   imports: [
-    RmqModule,
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: './apps/auth/.env',
@@ -18,8 +18,9 @@ import { RmqModule } from '@libs/common';
         RABBIT_MQ_URL: Joi.string().required(),
       }),
     }),
+    RmqModule.forRoot({ exchanges: [Exchange.Commands] }),
   ],
   controllers: [AuthController],
-  providers: [AuthService],
+  providers: [AuthController, AuthService],
 })
 export class AuthModule {}
