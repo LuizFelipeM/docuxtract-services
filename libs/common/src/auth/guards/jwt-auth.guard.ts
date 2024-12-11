@@ -1,5 +1,6 @@
 import { User } from '@clerk/backend';
-import { AmqpConnection, isRabbitContext } from '@golevelup/nestjs-rabbitmq';
+import { isRabbitContext } from '@golevelup/nestjs-rabbitmq';
+import { RmqService } from '@libs/common';
 import { RoutingKeys, Exchanges } from '@libs/contracts';
 import {
   CanActivate,
@@ -13,7 +14,7 @@ import {
 export class JwtAuthGuard implements CanActivate {
   private readonly logger = new Logger(JwtAuthGuard.name);
 
-  constructor(private readonly amqpConnection: AmqpConnection) {}
+  constructor(private readonly rmqService: RmqService) {}
 
   async canActivate(ctx: ExecutionContext): Promise<boolean> {
     try {
@@ -21,9 +22,9 @@ export class JwtAuthGuard implements CanActivate {
       if (user) return true;
 
       const authorization = this.getAuthorization(ctx);
-      user = await this.amqpConnection.request<any>({
-        exchange: Exchanges.commands.name,
-        routingKey: RoutingKeys.auth.verify.value,
+      user = await this.rmqService.rpc({
+        exchange: Exchanges.commands,
+        routingKey: RoutingKeys.auth.verify,
         payload: { authorization },
         timeout: 5000,
       });
@@ -58,7 +59,7 @@ export class JwtAuthGuard implements CanActivate {
     }
   }
 
-  private addUser(ctx: ExecutionContext, user) {
+  private addUser(ctx: ExecutionContext, user: User) {
     switch (ctx.getType<'http' | 'rmq'>()) {
       case 'http':
         ctx.switchToHttp().getRequest().user = user;

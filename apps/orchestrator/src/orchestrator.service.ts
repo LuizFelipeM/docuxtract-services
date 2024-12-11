@@ -1,21 +1,22 @@
-import { Inject, Injectable } from '@nestjs/common';
-import { ClientProxy } from '@nestjs/microservices';
+import { Injectable } from '@nestjs/common';
 import { SendEmailDto } from '../../../libs/contracts/src/dtos/send-email.dto';
-import { Services } from '@libs/contracts';
+import { Exchanges, RoutingKeys } from '@libs/contracts';
+import { RmqService } from '@libs/common';
 
 @Injectable()
 export class OrchestratorService {
-  constructor() // @Inject(Services.EmailInt) private readonly emailIntClient: ClientProxy,
-  {}
+  constructor(private readonly rmqService: RmqService) {}
 
-  // async sendEmail(request: SendEmailDto): Promise<void> {
-  //   try {
-  //     this.emailIntClient.emit('email.send', {
-  //       request,
-  //     });
-  //   } catch (err) {
-  //     console.error(err);
-  //     throw err;
-  //   }
-  // }
+  async sendEmail(request: SendEmailDto): Promise<void> {
+    try {
+      await this.rmqService.publish(
+        Exchanges.commands,
+        RoutingKeys.emailInt.send,
+        request,
+      );
+    } catch (err) {
+      console.error(err);
+      throw err;
+    }
+  }
 }
