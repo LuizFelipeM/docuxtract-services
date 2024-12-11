@@ -1,16 +1,16 @@
 import { RabbitMQExchangeConfig } from '@golevelup/nestjs-rabbitmq';
 
-type ExchangeProps = 'Commands' | 'Events';
+export class Exchange {
+  private readonly _config: RabbitMQExchangeConfig;
+  constructor(config: RabbitMQExchangeConfig) {
+    this._config = config;
+  }
 
-export const Exchange: Record<ExchangeProps, RabbitMQExchangeConfig> = {
-  Commands: {
-    name: 'commands',
-    type: 'topic',
-    createExchangeIfNotExists: true,
-  },
-  Events: {
-    name: 'events',
-    type: 'topic',
-    createExchangeIfNotExists: true,
-  },
-};
+  get name(): string {
+    return this._config.name;
+  }
+
+  get config(): RabbitMQExchangeConfig {
+    return this._config;
+  }
+}

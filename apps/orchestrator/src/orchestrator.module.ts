@@ -4,7 +4,7 @@ import { OrchestratorController } from './orchestrator.controller';
 import { OrchestratorService } from './orchestrator.service';
 import { AuthModule, RmqModule } from '@libs/common';
 import { ConfigModule } from '@nestjs/config';
-import { Exchange, Services } from '@libs/contracts';
+import { Exchanges } from '@libs/contracts';
 import { RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
 
 @Module({
@@ -34,7 +34,7 @@ import { RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
     //   ],
     // }),
 
-    RmqModule.forRoot({ exchanges: [Exchange.Commands, Exchange.Events] }),
+    RmqModule.forRoot({ exchanges: [Exchanges.commands, Exchanges.events] }),
   ],
   controllers: [OrchestratorController],
   providers: [OrchestratorService],

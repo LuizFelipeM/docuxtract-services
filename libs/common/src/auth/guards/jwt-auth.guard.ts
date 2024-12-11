@@ -1,6 +1,6 @@
 import { User } from '@clerk/backend';
 import { AmqpConnection, isRabbitContext } from '@golevelup/nestjs-rabbitmq';
-import { AuthRoutingKey, Exchange } from '@libs/contracts';
+import { RoutingKeys, Exchanges } from '@libs/contracts';
 import {
   CanActivate,
   ExecutionContext,
@@ -22,8 +22,8 @@ export class JwtAuthGuard implements CanActivate {
 
       const authorization = this.getAuthorization(ctx);
       user = await this.amqpConnection.request<any>({
-        exchange: Exchange.Commands.name,
-        routingKey: AuthRoutingKey.Verify,
+        exchange: Exchanges.commands.name,
+        routingKey: RoutingKeys.auth.verify.value,
         payload: { authorization },
         timeout: 5000,
       });

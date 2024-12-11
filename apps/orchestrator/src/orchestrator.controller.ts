@@ -3,7 +3,7 @@ import { OrchestratorService } from './orchestrator.service';
 import { SendEmailDto } from '../../../libs/contracts/src/dtos/send-email.dto';
 import { JwtAuthGuard } from '@libs/common';
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
-import { CrmIntRoutingKey, Exchange } from '@libs/contracts';
+import { Exchanges, RoutingKeys } from '@libs/contracts';
 
 @Controller('orchestrator')
 export class OrchestratorController {
@@ -22,8 +22,8 @@ export class OrchestratorController {
   @UseGuards(JwtAuthGuard)
   async sendRpc(@Body() payload: unknown): Promise<unknown> {
     return await this.amqpConnection.request<unknown>({
-      exchange: Exchange.Commands.name,
-      routingKey: CrmIntRoutingKey.Rpc,
+      exchange: Exchanges.commands.name,
+      routingKey: RoutingKeys.crmInt.rpc.value,
       payload,
       timeout: 10000,
     });
@@ -32,8 +32,8 @@ export class OrchestratorController {
   @Post('publish')
   async publish(@Body() payload: unknown) {
     this.amqpConnection.publish(
-      Exchange.Events.name,
-      CrmIntRoutingKey.Sub,
+      Exchanges.events.name,
+      RoutingKeys.crmInt.sub.value,
       payload,
     );
   }

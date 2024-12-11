@@ -1,7 +1,7 @@
 import { Controller, Logger } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RabbitRPC } from '@golevelup/nestjs-rabbitmq';
-import { AuthRoutingKey, Exchange } from '@libs/contracts';
+import { Exchanges, RoutingKeys } from '@libs/contracts';
 
 @Controller('auth')
 export class AuthController {
@@ -10,8 +10,8 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @RabbitRPC({
-    exchange: Exchange.Commands.name,
-    routingKey: AuthRoutingKey.Verify,
+    exchange: Exchanges.commands.name,
+    routingKey: RoutingKeys.auth.verify.value,
     queue: 'auth.commands',
   })
   async verifyToken(data: any): Promise<any> {

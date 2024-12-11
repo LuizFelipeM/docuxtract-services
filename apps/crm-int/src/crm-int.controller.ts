@@ -1,7 +1,7 @@
 import { Controller, UseGuards } from '@nestjs/common';
 import { CrmIntService } from './crm-int.service';
 import { RabbitRPC, RabbitSubscribe } from '@golevelup/nestjs-rabbitmq';
-import { CrmIntRoutingKey, Exchange } from '@libs/contracts';
+import { RoutingKeys, Exchanges } from '@libs/contracts';
 import { JwtAuthGuard } from '@libs/common';
 
 @Controller()
@@ -9,8 +9,8 @@ export class CrmIntController {
   constructor(private readonly crmIntService: CrmIntService) {}
 
   @RabbitRPC({
-    exchange: Exchange.Commands.name,
-    routingKey: CrmIntRoutingKey.Rpc,
+    exchange: Exchanges.commands.name,
+    routingKey: RoutingKeys.crmInt.rpc.value,
     queue: 'crm.rpc.queue',
   })
   @UseGuards(JwtAuthGuard)
@@ -20,8 +20,8 @@ export class CrmIntController {
   }
 
   @RabbitSubscribe({
-    exchange: Exchange.Events.name,
-    routingKey: CrmIntRoutingKey.Sub,
+    exchange: Exchanges.events.name,
+    routingKey: RoutingKeys.crmInt.sub.value,
     queue: 'crm.sub.queue',
   })
   async subHandler(msg: unknown): Promise<void> {

@@ -6,7 +6,7 @@ import { ConfigModule } from '@nestjs/config';
 import { AuthModule, DatabaseModule, RmqModule } from '@libs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Inbox } from './entities/inbox.entity';
-import { Exchange } from '@libs/contracts';
+import { Exchanges } from '@libs/contracts';
 
 @Module({
   imports: [
@@ -21,7 +21,7 @@ import { Exchange } from '@libs/contracts';
         RABBIT_MQ_URL: Joi.string().required(),
       }),
     }),
-    RmqModule.forRoot({ exchanges: [Exchange.Commands, Exchange.Events] }),
+    RmqModule.forRoot({ exchanges: [Exchanges.commands, Exchanges.events] }),
   ],
   controllers: [EmailIntController],
   providers: [EmailIntService],
