@@ -1,7 +1,7 @@
 import { User } from '@clerk/backend';
 import { isRabbitContext } from '@golevelup/nestjs-rabbitmq';
 import { RmqService } from '@libs/common';
-import { RoutingKeys, Exchanges } from '@libs/contracts';
+import { Exchanges, RoutingKeys } from '@libs/contracts';
 import {
   CanActivate,
   ExecutionContext,
