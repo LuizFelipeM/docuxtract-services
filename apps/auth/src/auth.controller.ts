@@ -1,13 +1,9 @@
+import { User } from '@clerk/backend';
+import { Nack, RabbitRPC } from '@golevelup/nestjs-rabbitmq';
+import { Exchanges, RoutingKeys } from '@libs/common';
+import { AuthVerifyDto } from '@libs/contracts/auth';
 import { Controller, Logger } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { ClerkAuthGuard } from './guards/clerk-auth.guard';
-import {
-  Ctx,
-  MessagePattern,
-  Payload,
-  RmqContext,
-} from '@nestjs/microservices';
-import { User } from '@clerk/backend';
 
 @Controller('auth')
 export class AuthController {
@@ -15,34 +11,19 @@ export class AuthController {
 
   constructor(private readonly authService: AuthService) {}
 
-  // @Post('verify')
-  // @HttpCode(HttpStatus.OK)
-  // async verify(@Body('token') token: string) {
-  //   return await this.authService.verify(token);
-  // }
-
-  @MessagePattern({ cmd: 'auth.verify' })
-  async verifyToken(@Payload() data: { authorization: string }): Promise<User> {
-    const jwt = await this.authService.verify(data.authorization);
-    this.logger.log(jwt);
-    const user = await this.authService.getUser(jwt.sub);
-    this.logger.log(user);
-    return user;
+  @RabbitRPC({
+    exchange: Exchanges.commands.name,
+    routingKey: RoutingKeys.auth.verify.value,
+    queue: 'auth.commands',
+  })
+  async verifyToken(data: AuthVerifyDto): Promise<User | Nack> {
+    try {
+      const jwt = await this.authService.verify(data.authorization);
+      const user = await this.authService.getUser(jwt.sub);
+      return user;
+    } catch (err) {
+      this.logger.error(err);
+      return new Nack();
+    }
   }
-
-  // @Get('user')
-  // async getUserDetails(@Query('userId') userId: string) {
-  //   return await this.authService.getUserDetails(userId);
-  // }
-
-  // @Get('all-users')
-  // async getUsers() {
-  //   return await this.authService.getUsers();
-  // }
-
-  // @Get()
-  // @UseGuards(ClerkAuthGuard)
-  // getHello(): string {
-  //   return this.authService.getHello();
-  // }
 }

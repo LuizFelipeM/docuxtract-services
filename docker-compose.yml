@@ -55,3 +55,21 @@ services:
       - 3002:3000
       - 9232:9229
   
+  crm-int:
+    container_name: crm-int
+    depends_on:
+      - rabbitmq
+      - postgres
+    build:
+      context: .
+      dockerfile: ./apps/crm-int/Dockerfile.dev
+    command: pnpm start:debug crm-int
+    env_file:
+      - ./apps/crm-int/.env
+    volumes:
+      - ./apps/crm-int:/app/apps/crm-int
+      - ./libs:/app/libs
+    ports:
+      - 3003:3000
+      - 9233:9229
+  

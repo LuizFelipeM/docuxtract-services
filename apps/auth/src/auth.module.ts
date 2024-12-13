@@ -1,13 +1,12 @@
-import * as Joi from 'joi';
+import { Exchanges, RmqModule } from '@libs/common';
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
+import * as Joi from 'joi';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
-import { ConfigModule } from '@nestjs/config';
-import { RmqModule } from '@libs/common';
 
 @Module({
   imports: [
-    RmqModule,
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: './apps/auth/.env',
@@ -18,8 +17,9 @@ import { RmqModule } from '@libs/common';
         RABBIT_MQ_URL: Joi.string().required(),
       }),
     }),
+    RmqModule.forRoot({ exchanges: [Exchanges.commands] }),
   ],
   controllers: [AuthController],
-  providers: [AuthService],
+  providers: [AuthController, AuthService],
 })
 export class AuthModule {}

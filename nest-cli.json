@@ -63,6 +63,15 @@
       "compilerOptions": {
         "tsConfigPath": "libs/contracts/tsconfig.lib.json"
       }
+    },
+    "pm-int": {
+      "type": "application",
+      "root": "apps/pm-int",
+      "entryFile": "main",
+      "sourceRoot": "apps/pm-int/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/pm-int/tsconfig.app.json"
+      }
     }
   }
 }

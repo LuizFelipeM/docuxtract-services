@@ -1,11 +1,18 @@
+import {
+  RabbitMQChannels,
+  RabbitMQConfig,
+  RabbitMQModule,
+} from '@golevelup/nestjs-rabbitmq';
 import { DynamicModule, Module } from '@nestjs/common';
-import { RmqService } from './rmq.service';
-import { ClientsModule, Transport } from '@nestjs/microservices';
 import { ConfigService } from '@nestjs/config';
-import { Services, ServicesConfigs } from '@libs/contracts';
+import { Exchange } from '../constants/exchange';
+import { RmqService } from './rmq.service';
 
 interface RmqModuleOptions {
-  name: Services;
+  exchanges: Exchange[];
+  prefetchCount?: number;
+  defaultRpcTimeout?: number;
+  channels?: RabbitMQChannels;
 }
 
 @Module({
@@ -13,47 +20,30 @@ interface RmqModuleOptions {
   exports: [RmqService],
 })
 export class RmqModule {
-  static register(
-    options: RmqModuleOptions | Array<RmqModuleOptions>,
-  ): DynamicModule {
-    let imports = [];
-    if (!Array.isArray(options))
-      imports.push(
-        ClientsModule.registerAsync([
-          {
-            name: options.name,
-            inject: [ConfigService],
-            useFactory: (configService: ConfigService) => ({
-              transport: Transport.RMQ,
-              options: {
-                urls: [configService.get<string>('RABBIT_MQ_URL')],
-                queue: ServicesConfigs[options.name].queue,
-              },
-            }),
-          },
-        ]),
-      );
-    else
-      imports = options.map(({ name }) =>
-        ClientsModule.registerAsync([
-          {
-            name,
-            inject: [ConfigService],
-            useFactory: (configService: ConfigService) => ({
-              transport: Transport.RMQ,
-              options: {
-                urls: [configService.get<string>('RABBIT_MQ_URL')],
-                queue: ServicesConfigs[name].queue,
-              },
-            }),
-          },
-        ]),
-      );
-
+  static forRoot({
+    exchanges,
+    prefetchCount = 20,
+    defaultRpcTimeout = undefined,
+    channels = {},
+  }: RmqModuleOptions): DynamicModule {
     return {
       module: RmqModule,
-      exports: [ClientsModule],
-      imports,
+      exports: [RabbitMQModule],
+      imports: [
+        RabbitMQModule.forRootAsync(RabbitMQModule, {
+          inject: [ConfigService],
+          useFactory: (
+            configService: ConfigService,
+          ): RabbitMQConfig | Promise<RabbitMQConfig> => ({
+            enableControllerDiscovery: true,
+            uri: configService.get<string>('RABBIT_MQ_URL'),
+            exchanges: exchanges.map((e) => e.config),
+            channels,
+            prefetchCount,
+            defaultRpcTimeout,
+          }),
+        }),
+      ],
     };
   }
 }

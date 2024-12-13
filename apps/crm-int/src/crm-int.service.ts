@@ -1,8 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 
 @Injectable()
 export class CrmIntService {
-  getHello(): string {
-    return 'Hello World!';
+  private readonly logger = new Logger(CrmIntService.name);
+
+  log(data: unknown): void {
+    this.logger.log(data);
   }
 }
