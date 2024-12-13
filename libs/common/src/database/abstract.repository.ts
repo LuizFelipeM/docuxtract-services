@@ -1,13 +1,13 @@
 import { Logger } from '@nestjs/common';
-import { AbstractEntity } from './abstract.entity';
 import { FindOptionsWhere, Repository } from 'typeorm';
+import { AbstractEntity } from './abstract.entity';
 
 type WithRequired<T, K extends keyof T> = T & { [P in K]-?: T[P] };
 
-export abstract class AbstractRepostiroy<TEntity extends AbstractEntity> {
+export abstract class AbstractRepository<TEntity extends AbstractEntity> {
   protected abstract readonly logger: Logger;
 
-  constructor(private readonly repository: Repository<TEntity>) {}
+  constructor(protected readonly repository: Repository<TEntity>) {}
 
   async insert(entity: TEntity): Promise<void> {
     await this.repository.insert(entity as any);

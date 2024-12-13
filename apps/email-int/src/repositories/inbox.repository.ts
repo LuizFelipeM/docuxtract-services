@@ -1,17 +1,13 @@
-import { AbstractRepostiroy } from '@libs/common';
+import { AbstractRepository } from '@libs/common';
 import { Injectable, Logger } from '@nestjs/common';
+import { DataSource } from 'typeorm';
 import { Inbox } from '../entities/inbox.entity';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 
 @Injectable()
-export class InboxRepository extends AbstractRepostiroy<Inbox> {
-  protected readonly logger = new Logger('InboxRepository');
+export class InboxRepository extends AbstractRepository<Inbox> {
+  protected readonly logger = new Logger(InboxRepository.name);
 
-  constructor(
-    @InjectRepository(InboxRepository)
-    private inboxRepository: Repository<Inbox>,
-  ) {
-    super(inboxRepository);
+  constructor(dataSource: DataSource) {
+    super(dataSource.getRepository<Inbox>(Inbox));
   }
 }

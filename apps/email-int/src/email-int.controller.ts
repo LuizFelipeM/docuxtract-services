@@ -1,6 +1,6 @@
 import { RabbitSubscribe } from '@golevelup/nestjs-rabbitmq';
 import { Exchanges, RoutingKeys } from '@libs/common';
-import { SendEmailDto } from '@libs/contracts/email-int';
+import { SaveInboxDto, SendEmailDto } from '@libs/contracts/email-int';
 import { Controller, Logger } from '@nestjs/common';
 import { EmailIntService } from './email-int.service';
 
@@ -13,10 +13,20 @@ export class EmailIntController {
   @RabbitSubscribe({
     exchange: Exchanges.events.name,
     routingKey: RoutingKeys.emailInt.send.value,
-    queue: 'email-int.envents',
+    queue: 'email-int.events',
   })
   async handleSendEmail(data: SendEmailDto) {
     this.logger.log(data);
     this.emailIntService.sendEmail(data);
+  }
+
+  @RabbitSubscribe({
+    exchange: Exchanges.events.name,
+    routingKey: RoutingKeys.emailInt.save.value,
+    queue: 'email-int.save',
+  })
+  async handleSaveInbox(data: SaveInboxDto) {
+    this.logger.log(data);
+    this.emailIntService.saveInbox(data);
   }
 }

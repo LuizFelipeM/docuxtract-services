@@ -6,4 +6,5 @@ export enum EmailIntRoutingKey {
 
 export const emailIntRtks = {
   send: new RoutingKey('email.send'),
+  save: new RoutingKey('email.save'),
 };
