@@ -1,7 +1,4 @@
 import { User } from '@clerk/backend';
-import { isRabbitContext } from '@golevelup/nestjs-rabbitmq';
-import { RmqService } from '@libs/common';
-import { Exchanges, RoutingKeys } from '@libs/contracts';
 import {
   CanActivate,
   ExecutionContext,
@@ -9,6 +6,8 @@ import {
   Logger,
   UnauthorizedException,
 } from '@nestjs/common';
+import { RoutingKeys } from '../../constants/routing-keys';
+import { RmqService } from '../../rmq/rmq.service';
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
@@ -18,12 +17,8 @@ export class JwtAuthGuard implements CanActivate {
 
   async canActivate(ctx: ExecutionContext): Promise<boolean> {
     try {
-      let user = this.getUser(ctx);
-      if (user) return true;
-
       const authorization = this.getAuthorization(ctx);
-      user = await this.rmqService.rpc({
-        exchange: Exchanges.commands,
+      const user = await this.rmqService.rpc<User>({
         routingKey: RoutingKeys.auth.verify,
         payload: { authorization },
         timeout: 5000,
@@ -36,44 +31,25 @@ export class JwtAuthGuard implements CanActivate {
     }
   }
 
-  private getUser(ctx: ExecutionContext): User | undefined {
-    if (isRabbitContext(ctx)) {
-      return ctx.getArgByIndex(0).user;
-    }
-  }
-
   private getAuthorization(ctx: ExecutionContext): string {
-    switch (ctx.getType<'http' | 'rmq'>()) {
-      case 'http':
-        const req = ctx.switchToHttp().getRequest();
-        this.logger.log(req.headers);
-        return (
-          req.headers['authorization']?.split(' ')[1] ??
-          req.headers['Authorization']?.split(' ')[1] ??
-          req.cookie?.__session
-        );
-      case 'rmq':
-        return ctx.getArgByIndex(0).authorization;
-      default:
-        throw new Error(`Unsupported ${ctx.getType()} request type`);
+    if (ctx.getType() === 'http') {
+      const req = ctx.switchToHttp().getRequest();
+      return (
+        req.headers['authorization']?.split(' ')[1] ??
+        req.headers['Authorization']?.split(' ')[1] ??
+        req.cookie?.__session
+      );
     }
+
+    throw new Error(`Unsupported ${ctx.getType()} request type`);
   }
 
   private addUser(ctx: ExecutionContext, user: User) {
-    switch (ctx.getType<'http' | 'rmq'>()) {
-      case 'http':
-        ctx.switchToHttp().getRequest().user = user;
-        break;
-
-      case 'rmq':
-        // Using reference to add content to the payload
-        const payload = ctx.getArgByIndex(0);
-        payload.user = user;
-        ctx.getArgByIndex(1).content = Buffer.from(JSON.stringify(payload));
-        break;
-
-      default:
-        throw new Error(`Unsupported ${ctx.getType()} request type`);
+    if (ctx.getType() === 'http') {
+      ctx.switchToHttp().getRequest().user = user;
+      return;
     }
+
+    throw new Error(`Unsupported ${ctx.getType()} request type`);
   }
 }

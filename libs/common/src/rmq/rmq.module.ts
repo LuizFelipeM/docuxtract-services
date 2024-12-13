@@ -1,15 +1,15 @@
-import { DynamicModule, Module } from '@nestjs/common';
-import { RmqService } from './rmq.service';
-import { ConfigService } from '@nestjs/config';
 import {
   RabbitMQChannels,
   RabbitMQConfig,
-  RabbitMQExchangeConfig,
   RabbitMQModule,
 } from '@golevelup/nestjs-rabbitmq';
+import { DynamicModule, Module } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { Exchange } from '../constants/exchange';
+import { RmqService } from './rmq.service';
 
 interface RmqModuleOptions {
-  exchanges: RabbitMQExchangeConfig[];
+  exchanges: Exchange[];
   prefetchCount?: number;
   defaultRpcTimeout?: number;
   channels?: RabbitMQChannels;
@@ -37,7 +37,7 @@ export class RmqModule {
           ): RabbitMQConfig | Promise<RabbitMQConfig> => ({
             enableControllerDiscovery: true,
             uri: configService.get<string>('RABBIT_MQ_URL'),
-            exchanges,
+            exchanges: exchanges.map((e) => e.config),
             channels,
             prefetchCount,
             defaultRpcTimeout,

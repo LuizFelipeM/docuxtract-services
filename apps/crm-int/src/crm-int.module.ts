@@ -1,11 +1,9 @@
-import * as Joi from 'joi';
+import { Exchanges, RmqModule } from '@libs/common';
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
+import * as Joi from 'joi';
 import { CrmIntController } from './crm-int.controller';
 import { CrmIntService } from './crm-int.service';
-import { RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
-import { ConfigModule } from '@nestjs/config';
-import { RmqModule } from '@libs/common';
-import { Exchanges } from '@libs/contracts';
 
 @Module({
   imports: [

@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
+import { Exchanges } from '../constants/exchanges';
 import { RmqModule } from '../rmq/rmq.module';
-import { Exchanges } from '@libs/contracts';
 
 @Module({
   imports: [RmqModule.forRoot({ exchanges: [Exchanges.commands] })],

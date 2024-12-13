@@ -1,42 +1,47 @@
 import { AmqpConnection, RequestOptions } from '@golevelup/nestjs-rabbitmq';
-import { Exchange, RoutingKey } from '@libs/contracts';
 import { Injectable } from '@nestjs/common';
-import { RmqContext } from '@nestjs/microservices';
 import { Options } from 'amqplib';
+import { Exchange } from '../constants/exchange';
+import { Exchanges } from '../constants/exchanges';
+import { RoutingKey } from '../constants/routing-key';
 
 interface RPCRequestOptions
   extends Omit<RequestOptions, 'exchange' | 'routingKey'> {
-  exchange: Exchange;
   routingKey: RoutingKey;
   payload: unknown;
+  exchange?: Exchange;
 }
 
 interface PublishOptions extends Options.Publish {
-  exchange: Exchange;
   routingKey: RoutingKey;
   payload: unknown;
+  exchange?: Exchange;
 }
 
 @Injectable()
 export class RmqService {
   constructor(private readonly amqpConnection: AmqpConnection) {}
 
+  private isRoutingKey(val: unknown): val is RoutingKey {
+    return val instanceof RoutingKey;
+  }
+
   rpc<T>(options: RPCRequestOptions): Promise<T>;
   rpc<T>(
-    exchange: Exchange,
     routingKey: RoutingKey,
     payload: unknown,
-  ): Promise<boolean>;
+    exchange?: Exchange,
+  ): Promise<T>;
   rpc<T>(
-    opts: RPCRequestOptions | Exchange,
-    rtk?: RoutingKey,
+    opts: RPCRequestOptions | RoutingKey,
     pld?: unknown,
+    exc?: Exchange,
   ): Promise<T> {
-    const { exchange, routingKey, ...options } = isExchange(opts)
-      ? { exchange: opts, routingKey: rtk, payload: pld }
+    const { exchange, routingKey, ...options } = this.isRoutingKey(opts)
+      ? { exchange: exc, routingKey: opts, payload: pld }
       : opts;
     return this.amqpConnection.request<T>({
-      exchange: exchange.name,
+      exchange: exchange?.name ?? Exchanges.commands.name,
       routingKey: routingKey.value,
       ...options,
     });
@@ -44,32 +49,25 @@ export class RmqService {
 
   publish(options: PublishOptions): Promise<boolean>;
   publish(
-    exchange: Exchange,
     routingKey: RoutingKey,
     payload: unknown,
+    exchange?: Exchange,
   ): Promise<boolean>;
   publish(
-    opts: PublishOptions | Exchange,
-    rtk?: RoutingKey,
+    opts: PublishOptions | RoutingKey,
     pld?: unknown,
+    exc?: Exchange,
   ): Promise<boolean> {
-    const { exchange, routingKey, payload, ...options } = isExchange(opts)
-      ? { exchange: opts, routingKey: rtk, payload: pld }
+    const { exchange, routingKey, payload, ...options } = this.isRoutingKey(
+      opts,
+    )
+      ? { exchange: exc, routingKey: opts, payload: pld }
       : opts;
-
     return this.amqpConnection.publish(
-      exchange.name,
+      exchange?.name ?? Exchanges.events.name,
       routingKey.value,
       payload,
       options,
     );
   }
-
-  ack(context: RmqContext) {
-    const channel = context.getChannelRef();
-    const originalMessage = context.getMessage();
-    channel.ack(originalMessage);
-  }
 }
-
-const isExchange = (val: unknown): val is Exchange => val instanceof Exchange;

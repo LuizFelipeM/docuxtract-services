@@ -1,5 +1,5 @@
 import { RabbitRPC, RabbitSubscribe } from '@golevelup/nestjs-rabbitmq';
-import { Exchanges, RoutingKeys } from '@libs/contracts';
+import { Exchanges, RoutingKeys } from '@libs/common';
 import { Controller } from '@nestjs/common';
 import { CrmIntService } from './crm-int.service';
 
@@ -12,7 +12,6 @@ export class CrmIntController {
     routingKey: RoutingKeys.crmInt.rpc.value,
     queue: 'crm.rpc.queue',
   })
-  // @UseGuards(JwtAuthGuard)
   async rpcHandler(msg: unknown): Promise<unknown> {
     this.crmIntService.log(msg);
     return msg;
