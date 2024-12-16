@@ -1,13 +1,13 @@
-import { AuthModule, Exchanges, RmqModule } from '@libs/common';
+import { AuthModule } from '@libs/common';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import * as Joi from 'joi';
 import { OrchestratorController } from './orchestrator.controller';
 import { OrchestratorService } from './orchestrator.service';
+import { WorkflowModule } from './workflow/workflow.module';
 
 @Module({
   imports: [
-    AuthModule,
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: './apps/orchestrator/.env',
@@ -16,7 +16,8 @@ import { OrchestratorService } from './orchestrator.service';
         RABBIT_MQ_URL: Joi.string().required(),
       }),
     }),
-    RmqModule.forRoot({ exchanges: [Exchanges.commands, Exchanges.events] }),
+    AuthModule,
+    WorkflowModule,
   ],
   controllers: [OrchestratorController],
   providers: [OrchestratorService],

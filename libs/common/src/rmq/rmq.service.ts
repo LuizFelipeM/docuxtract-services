@@ -43,6 +43,7 @@ export class RmqService {
     return this.amqpConnection.request<T>({
       exchange: exchange?.name ?? Exchanges.commands.name,
       routingKey: routingKey.value,
+      timeout: 5000,
       ...options,
     });
   }

@@ -1,4 +1,4 @@
-import { RabbitSubscribe } from '@golevelup/nestjs-rabbitmq';
+import { RabbitRPC, RabbitSubscribe } from '@golevelup/nestjs-rabbitmq';
 import { Exchanges, RoutingKeys } from '@libs/common';
 import { SaveInboxDto, SendEmailDto } from '@libs/contracts/email-int';
 import { Controller, Logger } from '@nestjs/common';
@@ -20,8 +20,8 @@ export class EmailIntController {
     this.emailIntService.sendEmail(data);
   }
 
-  @RabbitSubscribe({
-    exchange: Exchanges.events.name,
+  @RabbitRPC({
+    exchange: Exchanges.commands.name,
     routingKey: RoutingKeys.emailInt.save.value,
     queue: 'email-int.save',
   })

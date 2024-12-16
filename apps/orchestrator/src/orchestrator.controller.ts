@@ -1,6 +1,6 @@
 import { JwtAuthGuard } from '@libs/common';
-import { SaveInboxDto, SendEmailDto } from '@libs/contracts/email-int';
 import { Body, Controller, Post, UseGuards } from '@nestjs/common';
+import { SendEmailWf } from './dtos/send-email-wf.dto';
 import { OrchestratorService } from './orchestrator.service';
 
 @Controller('orchestrator')
@@ -8,13 +8,8 @@ import { OrchestratorService } from './orchestrator.service';
 export class OrchestratorController {
   constructor(private readonly orchestratorService: OrchestratorService) {}
 
-  @Post()
-  async sendEmail(@Body() request: SendEmailDto): Promise<void> {
-    await this.orchestratorService.sendEmail(request);
-  }
-
-  @Post('/inbox')
-  async saveInbox(@Body() request: SaveInboxDto): Promise<boolean> {
-    return await this.orchestratorService.saveInbox(request);
+  @Post('saga')
+  async executeSaga(@Body() request: SendEmailWf): Promise<void> {
+    return await this.orchestratorService.executeSaga(request);
   }
 }

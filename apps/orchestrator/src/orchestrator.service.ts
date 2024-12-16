@@ -1,26 +1,15 @@
-import { RmqService, RoutingKeys } from '@libs/common';
-import { SaveInboxDto, SendEmailDto } from '@libs/contracts/email-int';
 import { Injectable } from '@nestjs/common';
+import { SendEmailWf } from './dtos/send-email-wf.dto';
+import { SendEmailSaga } from './workflow/sagas/send-email.saga';
+import { WorkflowService } from './workflow/workflow.service';
 
 @Injectable()
 export class OrchestratorService {
-  constructor(private readonly rmqService: RmqService) {}
-
-  async sendEmail(request: SendEmailDto): Promise<void> {
-    try {
-      await this.rmqService.publish(RoutingKeys.emailInt.send, request);
-    } catch (err) {
-      console.error(err);
-      throw err;
-    }
+  constructor(private readonly workflowService: WorkflowService) {
+    this.workflowService.setSaga(SendEmailSaga);
   }
 
-  async saveInbox(request: SaveInboxDto): Promise<boolean> {
-    try {
-      return await this.rmqService.publish(RoutingKeys.emailInt.save, request);
-    } catch (err) {
-      console.error(err);
-      throw err;
-    }
+  async executeSaga(request: SendEmailWf) {
+    await this.workflowService.execute(request);
   }
 }
