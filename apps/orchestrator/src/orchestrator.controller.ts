@@ -3,7 +3,7 @@ import { Body, Controller, Post, UseGuards } from '@nestjs/common';
 import { SendEmailWf } from './dtos/send-email-wf.dto';
 import { OrchestratorService } from './orchestrator.service';
 
-@Controller('orchestrator')
+@Controller()
 @UseGuards(JwtAuthGuard)
 export class OrchestratorController {
   constructor(private readonly orchestratorService: OrchestratorService) {}

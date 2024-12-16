@@ -4,6 +4,7 @@ import { ConfigModule } from '@nestjs/config';
 import * as Joi from 'joi';
 import { CrmIntController } from './crm-int.controller';
 import { CrmIntService } from './crm-int.service';
+import { CrudController } from './crud/crud.controller';
 
 @Module({
   imports: [
@@ -16,7 +17,7 @@ import { CrmIntService } from './crm-int.service';
     }),
     RmqModule.forRoot({ exchanges: [Exchanges.commands, Exchanges.events] }),
   ],
-  controllers: [CrmIntController],
+  controllers: [CrmIntController, CrudController],
   providers: [CrmIntController, CrmIntService],
 })
 export class CrmIntModule {}
