@@ -16,7 +16,6 @@ services:
       - ./libs:/app/libs
       - ./apps/auth:/app/apps/auth
     ports:
-      - 3000:3000
       - 9230:9229
     networks:
       - services-net
@@ -36,7 +35,6 @@ services:
       - ./libs:/app/libs
       - ./apps/orchestrator:/app/apps/orchestrator
     ports:
-      - 3001:3000
       - 9231:9229
     networks:
       - services-net
@@ -56,7 +54,6 @@ services:
       - ./apps/email-int:/app/apps/email-int
       - ./libs:/app/libs
     ports:
-      - 3002:3000
       - 9232:9229
     networks:
       - services-net
@@ -76,7 +73,6 @@ services:
       - ./apps/crm-int:/app/apps/crm-int
       - ./libs:/app/libs
     ports:
-      - 3003:3000
       - 9233:9229
     networks:
       - services-net
