@@ -18,12 +18,15 @@ export class JwtAuthGuard implements CanActivate {
   async canActivate(ctx: ExecutionContext): Promise<boolean> {
     try {
       const authorization = this.getAuthorization(ctx);
-      const user = await this.rmqService.rpc<User>({
+      const { success, error, data } = await this.rmqService.rpc<User>({
         routingKey: RoutingKeys.auth.verify,
         payload: { authorization },
         timeout: 5000,
       });
-      this.addUser(ctx, user);
+
+      if (!success) throw error;
+
+      this.addUser(ctx, data);
       return true;
     } catch (err) {
       this.logger.error(err);

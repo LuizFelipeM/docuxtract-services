@@ -1,4 +1,5 @@
 import { AmqpConnection, RequestOptions } from '@golevelup/nestjs-rabbitmq';
+import { RPCMessage } from '@libs/contracts/rpc';
 import { Injectable } from '@nestjs/common';
 import { Options } from 'amqplib';
 import { Exchange } from '../constants/exchange';
@@ -26,21 +27,21 @@ export class RmqService {
     return val instanceof RoutingKey;
   }
 
-  rpc<T>(options: RPCRequestOptions): Promise<T>;
+  rpc<T>(options: RPCRequestOptions): Promise<RPCMessage<T>>;
   rpc<T>(
     routingKey: RoutingKey,
     payload: unknown,
     exchange?: Exchange,
-  ): Promise<T>;
+  ): Promise<RPCMessage<T>>;
   rpc<T>(
     opts: RPCRequestOptions | RoutingKey,
     pld?: unknown,
     exc?: Exchange,
-  ): Promise<T> {
+  ): Promise<RPCMessage<T>> {
     const { exchange, routingKey, ...options } = this.isRoutingKey(opts)
       ? { exchange: exc, routingKey: opts, payload: pld }
       : opts;
-    return this.amqpConnection.request<T>({
+    return this.amqpConnection.request<RPCMessage<T>>({
       exchange: exchange?.name ?? Exchanges.commands.name,
       routingKey: routingKey.value,
       timeout: 5000,
