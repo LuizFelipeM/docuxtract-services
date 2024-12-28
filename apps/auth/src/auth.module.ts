@@ -4,6 +4,7 @@ import { ConfigModule } from '@nestjs/config';
 import * as Joi from 'joi';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
+import { HealthcheckController } from './healthcheck/healthcheck.controller';
 
 @Module({
   imports: [
@@ -19,7 +20,7 @@ import { AuthService } from './auth.service';
     }),
     RmqModule.forRoot({ exchanges: [Exchanges.commands] }),
   ],
-  controllers: [AuthController],
+  controllers: [HealthcheckController, AuthController],
   providers: [AuthController, AuthService],
 })
 export class AuthModule {}

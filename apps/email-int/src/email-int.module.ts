@@ -5,6 +5,7 @@ import * as Joi from 'joi';
 import { EmailIntController } from './email-int.controller';
 import { EmailIntService } from './email-int.service';
 import { Inbox } from './entities/inbox.entity';
+import { HealthcheckController } from './healthcheck/healthcheck.controller';
 import { InboxRepository } from './repositories/inbox.repository';
 
 @Module({
@@ -23,7 +24,7 @@ import { InboxRepository } from './repositories/inbox.repository';
     }),
     RmqModule.forRoot({ exchanges: [Exchanges.commands, Exchanges.events] }),
   ],
-  controllers: [EmailIntController],
+  controllers: [HealthcheckController, EmailIntController],
   providers: [EmailIntController, EmailIntService, InboxRepository],
 })
 export class EmailIntModule {}

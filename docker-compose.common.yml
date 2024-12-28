@@ -45,6 +45,7 @@ services:
     depends_on:
       - orchestrator
       - crm-int
+      - feedback
     networks:
       - services-net
 

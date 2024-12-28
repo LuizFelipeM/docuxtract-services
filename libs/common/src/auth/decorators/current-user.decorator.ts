@@ -1,14 +1,12 @@
+import { User } from '@clerk/backend';
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
 
-export const CurrentUser = createParamDecorator(
+export const CurrentUser = createParamDecorator<User>(
   (_: unknown, ctx: ExecutionContext) => {
-    switch (ctx.getType()) {
-      case 'http':
-        return ctx.switchToHttp().getRequest().user;
-      case 'rpc':
-        return ctx.switchToRpc().getData().user;
-      default:
-        throw new Error(`Unsupported ${ctx.getType()} request type`);
+    if (ctx.getType() === 'http') {
+      return ctx.switchToHttp().getRequest().user;
     }
+
+    throw new Error(`Unsupported ${ctx.getType()} request type`);
   },
 );

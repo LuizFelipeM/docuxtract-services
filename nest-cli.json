@@ -72,6 +72,15 @@
       "compilerOptions": {
         "tsConfigPath": "apps/pm-int/tsconfig.app.json"
       }
+    },
+    "feedback": {
+      "type": "application",
+      "root": "apps/feedback",
+      "entryFile": "main",
+      "sourceRoot": "apps/feedback/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/feedback/tsconfig.app.json"
+      }
     }
   }
 }

@@ -77,3 +77,21 @@ services:
     networks:
       - services-net
   
+  feedback:
+    container_name: feedback
+    depends_on:
+      - rabbitmq
+      - postgres
+    build:
+      context: .
+      dockerfile: ./apps/feedback/Dockerfile.dev
+    env_file:
+      - ./apps/feedback/.env
+    volumes:
+      - ./apps/feedback:/app/apps/feedback
+      - ./libs:/app/libs
+    ports:
+      - 9234:9229
+    networks:
+      - services-net
+  

@@ -5,6 +5,7 @@ import * as Joi from 'joi';
 import { CrmIntController } from './crm-int.controller';
 import { CrmIntService } from './crm-int.service';
 import { CrudController } from './crud/crud.controller';
+import { HealthcheckController } from './healthcheck/healthcheck.controller';
 
 @Module({
   imports: [
@@ -17,7 +18,7 @@ import { CrudController } from './crud/crud.controller';
     }),
     RmqModule.forRoot({ exchanges: [Exchanges.commands, Exchanges.events] }),
   ],
-  controllers: [CrmIntController, CrudController],
+  controllers: [HealthcheckController, CrmIntController, CrudController],
   providers: [CrmIntController, CrmIntService],
 })
 export class CrmIntModule {}
