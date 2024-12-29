@@ -14,10 +14,10 @@ export class PaymentService {
   }
 
   async createCheckoutSession(
-    lookup_key: string,
+    lookupKey: string,
   ): Promise<Stripe.Response<Stripe.Checkout.Session>> {
     const prices = await this.stripe.prices.list({
-      lookup_keys: [lookup_key],
+      lookup_keys: [lookupKey],
       expand: ['data.product'],
     });
 

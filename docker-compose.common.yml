@@ -46,6 +46,7 @@ services:
       - orchestrator
       - crm-int
       - feedback
+      - payment
     networks:
       - services-net
 
