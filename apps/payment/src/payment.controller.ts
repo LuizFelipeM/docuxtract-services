@@ -2,11 +2,14 @@ import { JwtAuthGuard } from '@libs/common';
 import {
   Body,
   Controller,
+  Get,
   HttpStatus,
   Post,
+  Query,
   Redirect,
   UseGuards,
 } from '@nestjs/common';
+import Stripe from 'stripe';
 import { CreateCheckoutSessionDto } from './dtos/create-checkout-session.dto';
 import { PaymentService } from './payment.service';
 
@@ -24,6 +27,14 @@ export class PaymentController {
       createCheckoutSessionDto.lookupKey,
     );
     return { url: session.url };
+  }
+
+  @Get('list-price')
+  async listPrice(
+    @Query('lookupKey') lookupKey: string[],
+  ): Promise<Stripe.Response<Stripe.ApiList<Stripe.Price>>> {
+    const session = await this.paymentService.listPrice(lookupKey);
+    return session;
   }
 
   @Post('customer')

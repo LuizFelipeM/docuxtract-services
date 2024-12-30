@@ -8,9 +8,17 @@ export class PaymentService {
   private readonly stripe: Stripe;
 
   constructor(private readonly configService: ConfigService) {
-    this.stripe = new Stripe(
-      configService.get<string>('STRIPE_PUBLISHABLE_KEY'),
-    );
+    this.stripe = new Stripe(configService.get<string>('STRIPE_SECRET_KEY'));
+  }
+
+  async listPrice(
+    lookupKey: string[],
+  ): Promise<Stripe.Response<Stripe.ApiList<Stripe.Price>>> {
+    const prices = await this.stripe.prices.list({
+      lookup_keys: lookupKey,
+      expand: ['data.product'],
+    });
+    return prices;
   }
 
   async createCheckoutSession(
@@ -36,6 +44,7 @@ export class PaymentService {
       cancel_url: `${domain}?canceled=true`,
     });
 
+    this.logger.log(`Checkout session ${JSON.stringify(session)}`);
     return session;
   }
 
@@ -58,12 +67,13 @@ export class PaymentService {
 
     // This is the url to which the customer will be redirected when they are done
     // managing their billing with the portal.
-    const portalSession = await this.stripe.billingPortal.sessions.create({
+    const session = await this.stripe.billingPortal.sessions.create({
       customer,
       return_url: this.configService.get<string>('DOMAIN'),
     });
 
-    return portalSession;
+    this.logger.log(`Customer portal session ${JSON.stringify(session)}`);
+    return session;
   }
 
   processEvent(
