@@ -4,7 +4,9 @@ import * as cookieParser from 'cookie-parser';
 import { AuthModule } from './auth.module';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AuthModule);
+  const app = await NestFactory.create(AuthModule, {
+    rawBody: true,
+  });
 
   app.useGlobalPipes(new ValidationPipe());
   app.use(cookieParser());

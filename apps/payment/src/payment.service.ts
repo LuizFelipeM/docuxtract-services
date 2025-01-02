@@ -28,6 +28,7 @@ export class PaymentService {
       lookup_keys: [lookupKey],
       expand: ['data.product'],
     });
+    this.logger.log(`id ${prices.data[0].id}`);
 
     const domain = this.configService.get<string>('DOMAIN');
     const session = await this.stripe.checkout.sessions.create({
@@ -35,16 +36,14 @@ export class PaymentService {
       line_items: [
         {
           price: prices.data[0].id,
-          // For metered billing, do not pass quantity
           quantity: 1,
         },
       ],
       mode: 'subscription',
-      success_url: `${domain}/?success=true&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${domain}?canceled=true`,
+      success_url: `${domain}/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${domain}/canceled`,
     });
 
-    this.logger.log(`Checkout session ${JSON.stringify(session)}`);
     return session;
   }
 

@@ -1,7 +1,7 @@
 import { AbstractEntity } from '@libs/common';
 import { Column, Entity } from 'typeorm';
 
-export class Attachement {
+class Attachement {
   key: string;
   name: string;
   extension: string;

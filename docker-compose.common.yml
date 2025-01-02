@@ -48,6 +48,27 @@ services:
       - crm-int
       - feedback
       - payment
+      - auth
+    networks:
+      - services-net
+  
+  ngrok:
+    container_name: ngrok
+    image: ngrok/ngrok:alpine
+    restart: unless-stopped
+    env_file:
+      - ./.env
+    command:
+      - "start"
+      - "--all"
+      - "--config"
+      - "/etc/ngrok.yml"
+    volumes:
+      - ./ngrok.yml:/etc/ngrok.yml
+    ports:
+      - 4040:4040
+    depends_on:
+      - nginx
     networks:
       - services-net
 
