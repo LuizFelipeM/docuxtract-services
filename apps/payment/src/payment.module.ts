@@ -5,6 +5,7 @@ import * as Joi from 'joi';
 import { HealthcheckController } from './healthcheck/healthcheck.controller';
 import { PaymentController } from './payment.controller';
 import { PaymentService } from './payment.service';
+import { WebhooksController } from './webhooks/webhooks.controller';
 
 @Module({
   imports: [
@@ -22,7 +23,7 @@ import { PaymentService } from './payment.service';
     }),
     AuthModule,
   ],
-  controllers: [HealthcheckController, PaymentController],
+  controllers: [HealthcheckController, PaymentController, WebhooksController],
   providers: [PaymentService],
 })
 export class PaymentModule {}

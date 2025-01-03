@@ -25,6 +25,14 @@ export class AuthService {
     });
   }
 
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    return (
+      await this.clerkClient.users.getUserList({
+        emailAddress: [email],
+      })
+    ).data[0];
+  }
+
   async updateUserPublicMetadata(
     userId: string,
     publicMetadata: Record<string, unknown>,
@@ -48,7 +56,7 @@ export class AuthService {
     }
   }
 
-  async getUser(userId: string): Promise<User> {
+  async getUserById(userId: string): Promise<User> {
     try {
       return await this.clerkClient.users.getUser(userId);
     } catch (error) {

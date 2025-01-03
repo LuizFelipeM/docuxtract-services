@@ -1,3 +1,8 @@
+import { RmqService, RoutingKeys } from '@libs/common';
+import {
+  CustomerSubscriptionCreatedDto,
+  SubscriptionStatus,
+} from '@libs/contracts/payment';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Stripe from 'stripe';
@@ -7,7 +12,10 @@ export class PaymentService {
   private readonly logger = new Logger(PaymentService.name);
   private readonly stripe: Stripe;
 
-  constructor(private readonly configService: ConfigService) {
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly rmqService: RmqService,
+  ) {
     this.stripe = new Stripe(configService.get<string>('STRIPE_SECRET_KEY'));
   }
 
@@ -75,10 +83,10 @@ export class PaymentService {
     return session;
   }
 
-  processEvent(
+  async processEvent(
     stripeSignature: string,
     body: Stripe.Event | string | Buffer,
-  ): void {
+  ): Promise<void> {
     let event = body as Stripe.Event;
 
     // Replace this endpoint secret with your endpoint's unique secret
@@ -107,37 +115,28 @@ export class PaymentService {
       }
     }
 
-    let subscription:
-      | Stripe.Subscription
-      | Stripe.Entitlements.ActiveEntitlementSummary;
-
     switch (event.type) {
       case 'customer.subscription.trial_will_end':
-        subscription = event.data.object;
-        this.logger.log(`Subscription status is ${subscription.status}.`);
-        this.handleSubscriptionTrialEnding(subscription);
+        this.logger.log(`Subscription status is ${event.data.object.status}.`);
+        this.handleSubscriptionTrialEnding(event.data.object);
         break;
       case 'customer.subscription.deleted':
-        subscription = event.data.object;
-        this.logger.log(`Subscription status is ${subscription.status}.`);
-        this.handleSubscriptionDeleted(subscription);
+        this.logger.log(`Subscription status is ${event.data.object.status}.`);
+        this.handleSubscriptionDeleted(event.data.object);
         break;
       case 'customer.subscription.created':
-        subscription = event.data.object;
-        this.logger.log(`Subscription status is ${subscription.status}.`);
-        this.handleSubscriptionCreated(subscription);
+        this.logger.log(`Subscription status is ${event.data.object.status}.`);
+        await this.handleSubscriptionCreated(event.data.object);
         break;
       case 'customer.subscription.updated':
-        subscription = event.data.object;
-        this.logger.log(`Subscription status is ${subscription.status}.`);
-        this.handleSubscriptionUpdated(subscription);
+        this.logger.log(`Subscription status is ${event.data.object.status}.`);
+        this.handleSubscriptionUpdated(event.data.object);
         break;
       case 'entitlements.active_entitlement_summary.updated':
-        subscription = event.data.object;
         this.logger.log(
-          `Active entitlement summary updated for ${subscription}.`,
+          `Active entitlement summary updated for ${event.data.object}.`,
         );
-        this.handleEntitlementUpdated(subscription);
+        this.handleEntitlementUpdated(event.data.object);
         break;
       default:
         this.logger.error(`Unhandled event type ${event.type}.`);
@@ -153,8 +152,24 @@ export class PaymentService {
     throw new Error('Function not implemented.');
   }
 
-  private handleSubscriptionCreated(subscription: Stripe.Subscription) {
-    throw new Error('Function not implemented.');
+  private async handleSubscriptionCreated(subscription: Stripe.Subscription) {
+    const customerId = subscription.customer.toString();
+    const customer = await this.stripe.customers.retrieve(customerId);
+    const payload = new CustomerSubscriptionCreatedDto();
+    payload.customer = {
+      id: customerId,
+      email: customer.deleted ? undefined : (customer as Stripe.Customer).email,
+    };
+    payload.expiresAt = new Date(subscription.current_period_end);
+    payload.status = SubscriptionStatus[subscription.status];
+    payload.claims = subscription.items.data.map((item) =>
+      item.plan.product.toString(),
+    );
+
+    this.rmqService.publish(
+      RoutingKeys.payment.customerSubscriptionCreated,
+      payload,
+    );
   }
 
   private handleSubscriptionUpdated(subscription: Stripe.Subscription) {
