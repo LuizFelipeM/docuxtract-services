@@ -11,7 +11,7 @@ import { WebhooksController } from './webhooks/webhooks.controller';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: './apps/orchestrator/.env',
+      envFilePath: './apps/payment/.env',
       validationSchema: Joi.object({
         DOMAIN: Joi.string().required(),
         DB_CONNECTION_STRING: Joi.string().required(),

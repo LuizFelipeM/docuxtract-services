@@ -21,7 +21,10 @@ export class SaveInboxStep extends Step<SendEmailWf, void> {
       payload.sender = params.sender;
       payload.subject = params.subject;
 
-      await this.rmqService.rpc<boolean>(RoutingKeys.emailInt.save, payload);
+      await this.rmqService.request<boolean>(
+        RoutingKeys.emailInt.save,
+        payload,
+      );
     } catch (err) {
       console.error(err);
       throw err;

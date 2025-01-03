@@ -2,8 +2,12 @@ import { User } from '@clerk/backend';
 import { Nack, RabbitRPC, RabbitSubscribe } from '@golevelup/nestjs-rabbitmq';
 import { Exchanges, RoutingKeys } from '@libs/common';
 import { AuthVerifyDto } from '@libs/contracts/auth';
+import {
+  CommandRequest,
+  CommandResponse,
+  Event,
+} from '@libs/contracts/message-broker';
 import { CustomerSubscriptionCreatedDto } from '@libs/contracts/payment';
-import { RPCMessage } from '@libs/contracts/rpc';
 import { Controller, Logger } from '@nestjs/common';
 import { AuthService } from './auth.service';
 
@@ -18,14 +22,16 @@ export class AuthController {
     routingKey: RoutingKeys.auth.verify.value,
     queue: 'auth.commands',
   })
-  async verifyToken(data: AuthVerifyDto): Promise<RPCMessage<User>> {
+  async verifyToken(
+    command: CommandRequest<AuthVerifyDto>,
+  ): Promise<CommandResponse<User>> {
     try {
-      const jwt = await this.authService.verify(data.authorization);
+      const jwt = await this.authService.verify(command.data.authorization);
       const user = await this.authService.getUserById(jwt.sub);
-      return RPCMessage.build(user);
+      return command.response(user);
     } catch (err) {
       this.logger.error(err);
-      return RPCMessage.build(err);
+      return command.response(err);
     }
   }
 
@@ -35,9 +41,10 @@ export class AuthController {
     queue: 'auth.events.customer',
   })
   async customerSubscriptionUpdate(
-    data: CustomerSubscriptionCreatedDto,
+    event: Event<CustomerSubscriptionCreatedDto>,
   ): Promise<void | Nack> {
     try {
+      const { data } = event;
       const user = await this.authService.getUserByEmail(data.customer.email);
       if (!user)
         throw new Error(`User with e-mail ${data.customer.email} not found!`);

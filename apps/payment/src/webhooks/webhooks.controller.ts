@@ -19,7 +19,6 @@ export class WebhooksController {
   @Post('stripe')
   @HttpCode(HttpStatus.NO_CONTENT)
   async stripe(@Req() req: RawBodyRequest<Request>) {
-    const signature = req.header('stripe-signature');
-    this.paymentService.processEvent(signature, req.body);
+    await this.paymentService.processEvent(req);
   }
 }

@@ -3,8 +3,9 @@ import {
   CustomerSubscriptionCreatedDto,
   SubscriptionStatus,
 } from '@libs/contracts/payment';
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, RawBodyRequest } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { Request } from 'express';
 import Stripe from 'stripe';
 
 @Injectable()
@@ -84,10 +85,11 @@ export class PaymentService {
   }
 
   async processEvent(
-    stripeSignature: string,
-    body: Stripe.Event | string | Buffer,
+    request: RawBodyRequest<Request>,
+    // stripeSignature: string,
+    // body: Stripe.Event | string | Buffer,
   ): Promise<void> {
-    let event = body as Stripe.Event;
+    let event: Stripe.Event = request.body as Stripe.Event;
 
     // Replace this endpoint secret with your endpoint's unique secret
     // If you are testing with the CLI, find the secret by running 'stripe listen'
@@ -99,11 +101,12 @@ export class PaymentService {
 
     // Only verify the event if you have an endpoint secret defined.
     // Otherwise use the basic event deserialized with JSON.parse
-    if (endpointSecret) {
+    if (!endpointSecret) {
       try {
+        const signature = request.header('stripe-signature');
         event = this.stripe.webhooks.constructEvent(
-          body as string | Buffer,
-          stripeSignature,
+          request.body,
+          signature,
           endpointSecret,
         );
       } catch (err) {
@@ -140,7 +143,7 @@ export class PaymentService {
         break;
       default:
         this.logger.error(`Unhandled event type ${event.type}.`);
-        return;
+        break;
     }
   }
 
@@ -152,23 +155,29 @@ export class PaymentService {
     throw new Error('Function not implemented.');
   }
 
-  private async handleSubscriptionCreated(subscription: Stripe.Subscription) {
+  private async handleSubscriptionCreated(
+    subscription: Stripe.Subscription,
+  ): Promise<boolean> {
     const customerId = subscription.customer.toString();
     const customer = await this.stripe.customers.retrieve(customerId);
-    const payload = new CustomerSubscriptionCreatedDto();
-    payload.customer = {
-      id: customerId,
-      email: customer.deleted ? undefined : (customer as Stripe.Customer).email,
+    const payload: CustomerSubscriptionCreatedDto = {
+      customer: {
+        id: customerId,
+        email: customer.deleted
+          ? undefined
+          : (customer as Stripe.Customer).email,
+      },
+      expiresAt: new Date(subscription.current_period_end),
+      status: SubscriptionStatus[subscription.status],
+      claims: subscription.items.data.map((item) =>
+        item.plan.product.toString(),
+      ),
     };
-    payload.expiresAt = new Date(subscription.current_period_end);
-    payload.status = SubscriptionStatus[subscription.status];
-    payload.claims = subscription.items.data.map((item) =>
-      item.plan.product.toString(),
-    );
 
-    this.rmqService.publish(
+    return this.rmqService.publish(
       RoutingKeys.payment.customerSubscriptionCreated,
       payload,
+      'created',
     );
   }
 
