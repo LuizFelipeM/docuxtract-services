@@ -175,7 +175,7 @@ export class PaymentService {
     };
 
     return this.rmqService.publish(
-      RoutingKeys.payment.customerSubscriptionCreated,
+      RoutingKeys.payment.customerSubscription,
       payload,
       'created',
     );

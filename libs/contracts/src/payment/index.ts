@@ -1,1 +1,1 @@
-export * from './customer-subscription-created.dto';
+export * from './customer-subscription';

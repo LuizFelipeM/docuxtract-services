@@ -12,7 +12,7 @@ export class EmailIntController {
 
   @RabbitSubscribe({
     exchange: Exchanges.events.name,
-    routingKey: RoutingKeys.emailInt.send.value,
+    routingKey: RoutingKeys.emailInt.send.all,
     queue: 'email-int.events',
   })
   async handleSendEmail(data: SendEmailDto) {
@@ -22,7 +22,7 @@ export class EmailIntController {
 
   @RabbitRPC({
     exchange: Exchanges.commands.name,
-    routingKey: RoutingKeys.emailInt.save.value,
+    routingKey: RoutingKeys.emailInt.save.all,
     queue: 'email-int.save',
   })
   async handleSaveInbox(data: SaveInboxDto) {

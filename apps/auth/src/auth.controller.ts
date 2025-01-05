@@ -5,9 +5,11 @@ import { AuthVerifyDto } from '@libs/contracts/auth';
 import {
   CommandRequest,
   CommandResponse,
-  Event,
 } from '@libs/contracts/message-broker';
-import { CustomerSubscriptionCreatedDto } from '@libs/contracts/payment';
+import {
+  CreatedCustomerSubscriptionEvent,
+  CustomerSubscriptionEvents,
+} from '@libs/contracts/payment';
 import { Controller, Logger } from '@nestjs/common';
 import { AuthService } from './auth.service';
 
@@ -19,7 +21,7 @@ export class AuthController {
 
   @RabbitRPC({
     exchange: Exchanges.commands.name,
-    routingKey: RoutingKeys.auth.verify.value,
+    routingKey: RoutingKeys.auth.verify.all,
     queue: 'auth.commands',
   })
   async verifyToken(
@@ -37,14 +39,16 @@ export class AuthController {
 
   @RabbitSubscribe({
     exchange: Exchanges.events.name,
-    routingKey: RoutingKeys.payment.customerSubscriptionCreated.value,
-    queue: 'auth.events.customer',
+    routingKey: RoutingKeys.payment.customerSubscription.event(
+      CustomerSubscriptionEvents.created,
+    ),
+    queue: 'auth.events.customer.created',
   })
-  async customerSubscriptionUpdate(
-    event: Event<CustomerSubscriptionCreatedDto>,
-  ): Promise<void | Nack> {
+  async customerSubscriptionUpdate({
+    type,
+    data,
+  }: CreatedCustomerSubscriptionEvent): Promise<void | Nack> {
     try {
-      const { data } = event;
       const user = await this.authService.getUserByEmail(data.customer.email);
       if (!user)
         throw new Error(`User with e-mail ${data.customer.email} not found!`);
