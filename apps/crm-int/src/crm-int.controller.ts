@@ -9,7 +9,7 @@ export class CrmIntController {
 
   @RabbitRPC({
     exchange: Exchanges.commands.name,
-    routingKey: RoutingKeys.crmInt.rpc.value,
+    routingKey: RoutingKeys.crmInt.rpc.all,
     queue: 'crm.rpc.queue',
   })
   async rpcHandler(msg: unknown): Promise<unknown> {
@@ -19,7 +19,7 @@ export class CrmIntController {
 
   @RabbitSubscribe({
     exchange: Exchanges.events.name,
-    routingKey: RoutingKeys.crmInt.sub.value,
+    routingKey: RoutingKeys.crmInt.sub.all,
     queue: 'crm.sub.queue',
   })
   async subHandler(msg: unknown): Promise<void> {

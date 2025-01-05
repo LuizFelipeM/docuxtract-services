@@ -1,4 +1,5 @@
 import { User } from '@clerk/backend';
+import { AuthVerifyDto } from '@libs/contracts/auth';
 import {
   CanActivate,
   ExecutionContext,
@@ -17,10 +18,12 @@ export class JwtAuthGuard implements CanActivate {
 
   async canActivate(ctx: ExecutionContext): Promise<boolean> {
     try {
-      const authorization = this.getAuthorization(ctx);
-      const { success, error, data } = await this.rmqService.rpc<User>({
+      const { success, error, data } = await this.rmqService.request<
+        AuthVerifyDto,
+        User
+      >({
         routingKey: RoutingKeys.auth.verify,
-        payload: { authorization },
+        payload: { authorization: this.getAuthorization(ctx) },
         timeout: 5000,
       });
 

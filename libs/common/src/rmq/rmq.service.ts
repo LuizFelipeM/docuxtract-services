@@ -1,21 +1,27 @@
 import { AmqpConnection, RequestOptions } from '@golevelup/nestjs-rabbitmq';
-import { RPCMessage } from '@libs/contracts/rpc';
+import {
+  Command,
+  CommandResponse,
+  Event,
+} from '@libs/contracts/message-broker';
 import { Injectable } from '@nestjs/common';
 import { Options } from 'amqplib';
 import { Exchange } from '../constants/exchange';
 import { Exchanges } from '../constants/exchanges';
 import { RoutingKey } from '../constants/routing-key';
 
-interface RPCRequestOptions
+interface CommandRequestOptions<T = undefined, P = unknown>
   extends Omit<RequestOptions, 'exchange' | 'routingKey'> {
   routingKey: RoutingKey;
-  payload: unknown;
+  payload: P;
+  type?: T;
   exchange?: Exchange;
 }
 
-interface PublishOptions extends Options.Publish {
+interface EventPublishOptions<T = string, P = unknown> extends Options.Publish {
   routingKey: RoutingKey;
-  payload: unknown;
+  payload: P;
+  eventType: T;
   exchange?: Exchange;
 }
 
@@ -27,48 +33,57 @@ export class RmqService {
     return val instanceof RoutingKey;
   }
 
-  rpc<T>(options: RPCRequestOptions): Promise<RPCMessage<T>>;
-  rpc<T>(
+  request<P, R, T = undefined>(
+    options: CommandRequestOptions<T, P>,
+  ): Promise<CommandResponse<R>>;
+  request<P, R, T = undefined>(
     routingKey: RoutingKey,
-    payload: unknown,
+    payload: P,
+    type?: T,
     exchange?: Exchange,
-  ): Promise<RPCMessage<T>>;
-  rpc<T>(
-    opts: RPCRequestOptions | RoutingKey,
-    pld?: unknown,
+  ): Promise<CommandResponse<R>>;
+  request<P, R, T = undefined>(
+    opts: CommandRequestOptions<T, P> | RoutingKey,
+    pld?: P,
+    typ?: T,
     exc?: Exchange,
-  ): Promise<RPCMessage<T>> {
-    const { exchange, routingKey, ...options } = this.isRoutingKey(opts)
-      ? { exchange: exc, routingKey: opts, payload: pld }
-      : opts;
-    return this.amqpConnection.request<RPCMessage<T>>({
+  ): Promise<CommandResponse<R>> {
+    const { exchange, routingKey, payload, type, ...options } =
+      this.isRoutingKey(opts)
+        ? { exchange: exc, routingKey: opts, payload: pld, type: typ }
+        : opts;
+    return this.amqpConnection.request<CommandResponse<R>>({
       exchange: exchange?.name ?? Exchanges.commands.name,
-      routingKey: routingKey.value,
+      routingKey: routingKey.event(String(type)),
+      payload: Command.build(type, payload),
       timeout: 5000,
       ...options,
     });
   }
 
-  publish(options: PublishOptions): Promise<boolean>;
-  publish(
+  publish<T = string, P = unknown>(
+    options: EventPublishOptions<T, P>,
+  ): Promise<boolean>;
+  publish<T = string, P = unknown>(
     routingKey: RoutingKey,
-    payload: unknown,
+    payload: P,
+    eventType: T,
     exchange?: Exchange,
   ): Promise<boolean>;
-  publish(
-    opts: PublishOptions | RoutingKey,
-    pld?: unknown,
+  publish<T = string, P = unknown>(
+    opts: EventPublishOptions<T, P> | RoutingKey,
+    pld?: P,
+    etyp?: T,
     exc?: Exchange,
   ): Promise<boolean> {
-    const { exchange, routingKey, payload, ...options } = this.isRoutingKey(
-      opts,
-    )
-      ? { exchange: exc, routingKey: opts, payload: pld }
-      : opts;
+    const { exchange, routingKey, payload, eventType, ...options } =
+      this.isRoutingKey(opts)
+        ? { exchange: exc, routingKey: opts, payload: pld, eventType: etyp }
+        : opts;
     return this.amqpConnection.publish(
       exchange?.name ?? Exchanges.events.name,
-      routingKey.value,
-      payload,
+      routingKey.event(String(eventType)),
+      Event.build(eventType, payload),
       options,
     );
   }

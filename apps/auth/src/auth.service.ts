@@ -1,4 +1,3 @@
-import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import {
   ClerkClient,
   createClerkClient,
@@ -6,6 +5,7 @@ import {
   verifyToken,
 } from '@clerk/backend';
 import type { JwtPayload } from '@clerk/types';
+import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
 @Injectable()
@@ -25,20 +25,38 @@ export class AuthService {
     });
   }
 
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    return (
+      await this.clerkClient.users.getUserList({
+        emailAddress: [email],
+      })
+    ).data[0];
+  }
+
+  async updateUserPublicMetadata(
+    userId: string,
+    publicMetadata: Record<string, unknown>,
+  ): Promise<User> {
+    return await this.clerkClient.users.updateUserMetadata(userId, {
+      publicMetadata,
+    });
+  }
+
   async verify(token: string): Promise<JwtPayload> {
     try {
-      return await verifyToken(token, {
+      const jwt = await verifyToken(token, {
         secretKey: this.configService.get<string>('CLERK_SECRET_KEY'),
         authorizedParties: this.configService.get<string[]>(
           'CLERK_AUTHORIZED_PARTIES',
         ),
       });
+      return jwt;
     } catch (err) {
       throw new UnauthorizedException('Invalid or expired token');
     }
   }
 
-  async getUser(userId: string): Promise<User> {
+  async getUserById(userId: string): Promise<User> {
     try {
       return await this.clerkClient.users.getUser(userId);
     } catch (error) {

@@ -4,7 +4,12 @@ import { FeedbackModule } from './feedback.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(FeedbackModule);
-  app.useGlobalPipes(new ValidationPipe());
+  app.useGlobalPipes(
+    new ValidationPipe({
+      transform: true,
+      whitelist: true,
+    }),
+  );
   await app.listen(process.env.port ?? 3000);
 }
 bootstrap();
