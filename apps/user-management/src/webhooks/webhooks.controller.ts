@@ -10,17 +10,13 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { Request } from 'express';
 import { Webhook as SvixWebhook } from 'svix';
-import { UserRepository } from '../repositories/user.repository';
 
 @Controller('webhooks')
 export class WebhooksController {
   private readonly logger = new Logger(WebhooksController.name);
   private readonly clerkWebhook: SvixWebhook;
 
-  constructor(
-    private readonly configService: ConfigService,
-    private readonly userRepository: UserRepository,
-  ) {
+  constructor(private readonly configService: ConfigService) {
     this.clerkWebhook = new SvixWebhook(
       this.configService.get<string>('CLERK_SIGNING_SECRET'),
     );
@@ -57,7 +53,7 @@ export class WebhooksController {
         break;
 
       case 'user.deleted':
-        this.userRepository.delete({ id: event.data.id });
+        // this.userRepository.delete({ id: event.data.id });
         return;
     }
     this.logger.log(

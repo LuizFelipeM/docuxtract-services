@@ -1,20 +1,20 @@
 name: docuxtract-services
 
 services:
-  auth:
-    container_name: auth
+  user-management:
+    container_name: user-management
     depends_on:
       - rabbitmq
       - postgres
     build:
       context: .
-      dockerfile: ./apps/auth/Dockerfile.dev
-    command: pnpm start:debug auth
+      dockerfile: ./apps/user-management/Dockerfile.dev
+    command: pnpm start:debug user-management
     env_file:
-      - ./apps/auth/.env
+      - ./apps/user-management/.env
     volumes:
       - ./libs:/app/libs
-      - ./apps/auth:/app/apps/auth
+      - ./apps/user-management:/app/apps/user-management
     ports:
       - 9230:9229
     networks:

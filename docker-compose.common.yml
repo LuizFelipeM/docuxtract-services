@@ -48,7 +48,7 @@ services:
       - crm-int
       - feedback
       - payment
-      - auth
+      - user-management
     networks:
       - services-net
   

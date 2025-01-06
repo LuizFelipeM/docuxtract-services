@@ -13,7 +13,7 @@ export class RoutingKey {
     return `${this._value}.#`;
   }
 
-  event(value: string): string {
-    return `${this._value}.${value}`;
+  event(value?: string): string {
+    return `${this._value}${value ? `.${value}` : ''}`;
   }
 }

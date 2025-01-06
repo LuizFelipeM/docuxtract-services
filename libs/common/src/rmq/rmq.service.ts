@@ -54,7 +54,7 @@ export class RmqService {
         : opts;
     return this.amqpConnection.request<CommandResponse<R>>({
       exchange: exchange?.name ?? Exchanges.commands.name,
-      routingKey: routingKey.event(String(type)),
+      routingKey: routingKey.event(type ? String(type) : undefined),
       payload: Command.build(type, payload),
       timeout: 5000,
       ...options,
@@ -82,7 +82,7 @@ export class RmqService {
         : opts;
     return this.amqpConnection.publish(
       exchange?.name ?? Exchanges.events.name,
-      routingKey.event(String(eventType)),
+      routingKey.event(eventType ? String(eventType) : undefined),
       Event.build(eventType, payload),
       options,
     );

@@ -86,7 +86,7 @@ Check out a few resources that may come in handy when working with NestJS:
 
 ## Apps (microservices)
 
-- auth - Authentication service used to validate the user
+- user-management - Service responsible for user management related stuff, authentication, permissions, and so on
 - orchestrator - Responsible for microservice orchestration in complex workflows
 - crm-int - Customer Relationship Management (CRM) tools integration
 - email-int - E-mail tools integration
