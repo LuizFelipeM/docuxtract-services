@@ -1,115 +1,133 @@
-name: docuxtract-services
+name: microservices-swarm
 
 services:
-  user-management:
-    container_name: user-management
+  ms-user-management:
+    container_name: ms-user-management
     depends_on:
-      - rabbitmq
-      - postgres
+      - ms-rabbitmq
+      - ms-postgres
     build:
       context: .
       dockerfile: ./apps/user-management/Dockerfile.dev
     command: pnpm start:debug user-management
     env_file:
       - ./apps/user-management/.env
+    environment:
+      RABBIT_MQ_URL: "amqp://admin:password@ms-rabbitmq/"
+      DB_CONNECTION_STRING: "postgresql://postgres:password@ms-postgres/database"
     volumes:
       - ./libs:/app/libs
       - ./apps/user-management:/app/apps/user-management
     ports:
       - 9230:9229
     networks:
-      - services-net
+      - ms-services-net
 
-  orchestrator:
-    container_name: orchestrator
+  ms-orchestrator:
+    container_name: ms-orchestrator
     depends_on:
-      - rabbitmq
-      - postgres
+      - ms-rabbitmq
+      - ms-postgres
     build:
       context: .
       dockerfile: ./apps/orchestrator/Dockerfile.dev
     command: pnpm start:debug orchestrator
     env_file:
       - ./apps/orchestrator/.env
+    environment:
+      RABBIT_MQ_URL: "amqp://admin:password@ms-rabbitmq/"
+      DB_CONNECTION_STRING: "postgresql://postgres:password@ms-postgres/database"
     volumes:
       - ./libs:/app/libs
       - ./apps/orchestrator:/app/apps/orchestrator
     ports:
       - 9231:9229
     networks:
-      - services-net
+      - ms-services-net
   
-  email-int:
-    container_name: email-int
+  ms-email-int:
+    container_name: ms-email-int
     depends_on:
-      - rabbitmq
-      - postgres
+      - ms-rabbitmq
+      - ms-postgres
     build:
       context: .
       dockerfile: ./apps/email-int/Dockerfile.dev
     command: pnpm start:debug email-int
     env_file:
       - ./apps/email-int/.env
+    environment:
+      RABBIT_MQ_URL: "amqp://admin:password@ms-rabbitmq/"
+      DB_CONNECTION_STRING: "postgresql://postgres:password@ms-postgres/database"
     volumes:
       - ./apps/email-int:/app/apps/email-int
       - ./libs:/app/libs
     ports:
       - 9232:9229
     networks:
-      - services-net
+      - ms-services-net
   
-  crm-int:
-    container_name: crm-int
+  ms-crm-int:
+    container_name: ms-crm-int
     depends_on:
-      - rabbitmq
-      - postgres
+      - ms-rabbitmq
+      - ms-postgres
     build:
       context: .
       dockerfile: ./apps/crm-int/Dockerfile.dev
     command: pnpm start:debug crm-int
     env_file:
       - ./apps/crm-int/.env
+    environment:
+      RABBIT_MQ_URL: "amqp://admin:password@ms-rabbitmq/"
+      DB_CONNECTION_STRING: "postgresql://postgres:password@ms-postgres/database"
     volumes:
       - ./apps/crm-int:/app/apps/crm-int
       - ./libs:/app/libs
     ports:
       - 9233:9229
     networks:
-      - services-net
+      - ms-services-net
   
-  feedback:
-    container_name: feedback
+  ms-feedback:
+    container_name: ms-feedback
     depends_on:
-      - rabbitmq
-      - postgres
+      - ms-rabbitmq
+      - ms-postgres
     build:
       context: .
       dockerfile: ./apps/feedback/Dockerfile.dev
     env_file:
       - ./apps/feedback/.env
+    environment:
+      RABBIT_MQ_URL: "amqp://admin:password@ms-rabbitmq/"
+      DB_CONNECTION_STRING: "postgresql://postgres:password@ms-postgres/database"
     volumes:
       - ./apps/feedback:/app/apps/feedback
       - ./libs:/app/libs
     ports:
       - 9234:9229
     networks:
-      - services-net
+      - ms-services-net
   
-  payment:
-    container_name: payment
+  ms-payment:
+    container_name: ms-payment
     depends_on:
-      - rabbitmq
-      - postgres
+      - ms-rabbitmq
+      - ms-postgres
     build:
       context: .
       dockerfile: ./apps/payment/Dockerfile.dev
     env_file:
       - ./apps/payment/.env
+    environment:
+      RABBIT_MQ_URL: "amqp://admin:password@ms-rabbitmq/"
+      DB_CONNECTION_STRING: "postgresql://postgres:password@ms-postgres/database"
     volumes:
       - ./apps/payment:/app/apps/payment
       - ./libs:/app/libs
     ports:
       - 9235:9229
     networks:
-      - services-net
+      - ms-services-net
   
