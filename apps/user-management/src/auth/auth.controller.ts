@@ -65,10 +65,9 @@ export class AuthController {
     routingKey: RoutingKeys.payment.customerSubscription.all,
     queue: 'auth.events.customer.subscription',
   })
-  async customerSubscriptionHandler({
-    type,
-    data,
-  }: CustomerSubscriptionEvent): Promise<void | Nack> {
+  async customerSubscriptionHandler(
+    @RabbitPayload() { type, data }: CustomerSubscriptionEvent,
+  ): Promise<void | Nack> {
     try {
       switch (type) {
         case CustomerSubscriptionEvents.created:
@@ -87,18 +86,9 @@ export class AuthController {
   private async newCustomerSubscription(
     subscription: CustomerSubscriptionCreatedDto,
   ): Promise<void> {
-    const user = await this.authService.getUserByEmail(
-      subscription.customer.email,
-    );
-    if (!user)
-      throw new Error(
-        `User with e-mail ${subscription.customer.email} not found!`,
-      );
-
-    await this.authService.updateUserPublicMetadata(user.id, {
+    await this.authService.updateUserPublicMetadata(subscription.user.id, {
       subs: {
-        cId: subscription.customer.id,
-        clm: subscription.claims,
+        cid: subscription.customer.id,
         sts: subscription.status,
         exp: new Date(subscription.expiresAt).getTime(),
       },

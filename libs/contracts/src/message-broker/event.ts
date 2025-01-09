@@ -6,22 +6,21 @@ export class Event<T, K = string> {
   @IsNotEmpty()
   id: string;
 
-  @IsNotEmpty()
-  type: K;
-
   @IsNotEmptyObject()
   data: T;
 
-  private constructor(type: K, data: T) {
-    this.type = type;
+  type: K;
+
+  private constructor(data: T, type: K) {
     this.data = data;
+    this.type = type;
     this.id = CryptoUtils.generateHash(
-      JSON.stringify(type),
       JSON.stringify(data),
+      type ? JSON.stringify(type) : '',
     );
   }
 
-  static build<T, K = string>(type: K, data: T): Event<T, K> {
-    return new Event(type, data);
+  static build<T, K = string>(data: T, type: K): Event<T, K> {
+    return new Event(data, type);
   }
 }

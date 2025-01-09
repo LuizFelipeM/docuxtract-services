@@ -1,6 +1,6 @@
 import {
-  IsArray,
   IsDate,
+  IsEmail,
   IsNotEmpty,
   IsNotEmptyObject,
   IsString,
@@ -22,16 +22,27 @@ export class SubscribedCustomerDto {
   @IsNotEmpty()
   id: string;
 
-  email?: string;
+  @IsEmail()
+  @IsNotEmpty()
+  email: string;
+}
+
+export class SubscribedUserDto {
+  @IsString()
+  @IsNotEmpty()
+  id: string;
+
+  @IsEmail()
+  @IsNotEmpty()
+  email: string;
 }
 
 export class CustomerSubscriptionCreatedDto {
   @IsNotEmptyObject()
   customer: SubscribedCustomerDto;
 
-  @IsArray()
-  @IsNotEmpty()
-  claims: string[];
+  @IsNotEmptyObject()
+  user: SubscribedUserDto;
 
   @IsNotEmpty()
   status: SubscriptionStatus;

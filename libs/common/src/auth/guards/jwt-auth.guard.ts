@@ -23,12 +23,10 @@ export class JwtAuthGuard implements CanActivate {
 
       const { success, error, data } = await this.rmqService.request<
         AuthVerifyDto,
-        JwtPayload,
-        string
+        JwtPayload
       >({
         routingKey: RoutingKeys.auth.verify,
         payload,
-        type: 'abacate',
         timeout: 5000,
       });
 

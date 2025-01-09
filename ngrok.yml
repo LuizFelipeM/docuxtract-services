@@ -7,4 +7,4 @@ endpoints:
     description: NGINX tunnel
     url: lenient-really-badger.ngrok-free.app
     upstream:
-      url: nginx:80
+      url: ms-nginx:80

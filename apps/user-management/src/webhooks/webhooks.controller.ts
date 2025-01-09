@@ -10,13 +10,17 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { Request } from 'express';
 import { Webhook as SvixWebhook } from 'svix';
+import { PermissionService } from '../permission/permission.service';
 
 @Controller('webhooks')
 export class WebhooksController {
   private readonly logger = new Logger(WebhooksController.name);
   private readonly clerkWebhook: SvixWebhook;
 
-  constructor(private readonly configService: ConfigService) {
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly permissionService: PermissionService,
+  ) {
     this.clerkWebhook = new SvixWebhook(
       this.configService.get<string>('CLERK_SIGNING_SECRET'),
     );
@@ -26,8 +30,6 @@ export class WebhooksController {
   async clerk(@Req() req: RawBodyRequest<Request>) {
     const body = req.rawBody.toString('utf8');
     const headers = req.headers as Record<string, string>;
-
-    this.logger.log(`Webhook payload: ${body}`);
 
     let event: ClerkWebhookEvent;
     try {
@@ -40,18 +42,22 @@ export class WebhooksController {
     }
 
     // Do something with payload
-    // For this guide, log payload to console
     const { type } = event;
 
     let userId: string;
     let customerId: string;
     switch (type) {
       case 'user.created':
-      case 'user.updated':
         userId = event.data.id;
         customerId = String(event.data.public_metadata.customer_id);
+        this.permissionService.syncUser(
+          userId,
+          customerId,
+          event.data.primary_email_address_id,
+        );
         break;
 
+      case 'user.updated':
       case 'user.deleted':
         // this.userRepository.delete({ id: event.data.id });
         return;

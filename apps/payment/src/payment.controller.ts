@@ -1,4 +1,4 @@
-import { JwtAuthGuard } from '@libs/common';
+import { CurrentUserId, JwtAuthGuard } from '@libs/common';
 import {
   Body,
   Controller,
@@ -25,12 +25,14 @@ export class PaymentController {
   @UseGuards(JwtAuthGuard)
   @Redirect(undefined, HttpStatus.SEE_OTHER)
   async createCheckoutSession(
+    @CurrentUserId() userId: string,
     @Body() createCheckoutSessionDto: CreateCheckoutSessionDto,
   ): Promise<{ url: string }> {
     const session = await this.paymentService.createCheckoutSession(
+      userId,
       createCheckoutSessionDto.lookupKey,
     );
-    this.logger.log(session.url);
+
     return { url: session.url };
   }
 

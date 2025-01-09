@@ -105,3 +105,16 @@ Nest is an MIT-licensed open source project. It can grow thanks to the sponsors 
 ## License
 
 Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+
+
+## To do
+
+~~- Integrate Clerk~~
+~~- Integrate Stripe~~
+~~- Integrate Permit.io~~
+~~- Bind Clerk UserId to Stripe Subscription~~
+~~- Propagate event when a Stripe subscription is created/updated/deleted~~
+~~- Consume Stripe subscription in User Management service~~
+~~- Bind Stripe Subscription to Clerk User~~
+- Update Clerk User according Stripe subscription events
+- Create permissions in Permit.io based on Clerk User, Stripe Subscription and Resources

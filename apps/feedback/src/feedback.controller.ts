@@ -1,5 +1,4 @@
-import { User } from '@clerk/backend';
-import { CurrentUser, JwtAuthGuard } from '@libs/common';
+import { CurrentUserId, JwtAuthGuard } from '@libs/common';
 import {
   Body,
   Controller,
@@ -19,9 +18,9 @@ export class FeedbackController {
   @Post('answer')
   @HttpCode(HttpStatus.NO_CONTENT)
   async answer(
-    @CurrentUser() currentUser: User,
+    @CurrentUserId() userId: string,
     @Body() answerSurvey: AnswerSurveyDto,
   ): Promise<void> {
-    await this.feedbackService.answer(currentUser.id, answerSurvey);
+    await this.feedbackService.answer(userId, answerSurvey);
   }
 }

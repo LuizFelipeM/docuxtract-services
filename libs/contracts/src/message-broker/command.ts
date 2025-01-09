@@ -7,27 +7,26 @@ import {
   ValidateIf,
 } from 'class-validator';
 
-export class CommandRequest<T, K = string> {
+export class CommandRequest<T, K = undefined> {
   @IsString()
   @IsNotEmpty()
   id: string;
 
   @IsNotEmpty()
-  type: K;
-
-  @IsNotEmpty()
   data: T;
 
-  static build<TData, KType = string>(
-    type: KType,
+  type: K;
+
+  static build<TData, KType = undefined>(
     data: TData,
+    type: KType,
   ): CommandRequest<TData, KType> {
     const request = new CommandRequest<TData, KType>();
-    request.type = type;
     request.data = data;
+    request.type = type;
     request.id = CryptoUtils.generateHash(
-      JSON.stringify(type),
       JSON.stringify(data),
+      type ? JSON.stringify(type) : '',
     );
     return request;
   }
@@ -77,7 +76,7 @@ export class CommandResponse<T> {
 }
 
 export class Command {
-  static build<T, K = string>(type: K, data: T): CommandRequest<T, K> {
-    return CommandRequest.build(type, data);
+  static build<T, K = undefined>(data: T, type: K): CommandRequest<T, K> {
+    return CommandRequest.build(data, type);
   }
 }

@@ -1,5 +1,5 @@
 export * from './auth/auth.module';
-export * from './auth/decorators/current-user.decorator';
+export * from './auth/decorators/current-user-id.decorator';
 export * from './auth/guards/jwt-auth.guard';
 export * from './constants/exchange';
 export * from './constants/exchanges';
