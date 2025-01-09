@@ -1,5 +1,6 @@
 import { RoutingKey } from '../routing-key';
 
 export const authRtks = {
-  verify: new RoutingKey('auth', 'verify'),
+  verify: new RoutingKey('verify'),
+  getUser: new RoutingKey('get', 'user'),
 };

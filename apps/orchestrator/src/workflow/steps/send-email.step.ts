@@ -20,7 +20,7 @@ export class SendEmaiStep extends Step<SendEmailWf, void> {
       payload.receipient = params.receipient;
       payload.subject = params.subject;
 
-      await this.rmqService.publish(RoutingKeys.emailInt.send, payload);
+      await this.rmqService.publish(RoutingKeys.emailInt.send, payload, 'test');
     } catch (err) {
       console.error(err);
       throw err;

@@ -44,13 +44,12 @@ export class AuthService {
 
   async verify(token: string): Promise<JwtPayload> {
     try {
-      const jwt = await verifyToken(token, {
+      return await verifyToken(token, {
         secretKey: this.configService.get<string>('CLERK_SECRET_KEY'),
         authorizedParties: this.configService.get<string[]>(
           'CLERK_AUTHORIZED_PARTIES',
         ),
       });
-      return jwt;
     } catch (err) {
       throw new UnauthorizedException('Invalid or expired token');
     }

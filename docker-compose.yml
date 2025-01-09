@@ -1,32 +1,23 @@
 name: microservices-swarm
 
 services:
-<<<<<<< Updated upstream
-  auth:
-    container_name: auth
-=======
   ms-user-management:
     container_name: ms-user-management
->>>>>>> Stashed changes
     depends_on:
       - ms-rabbitmq
       - ms-postgres
     build:
       context: .
-      dockerfile: ./apps/auth/Dockerfile.dev
-    command: pnpm start:debug auth
+      dockerfile: ./apps/user-management/Dockerfile.dev
+    command: pnpm start:debug user-management
     env_file:
-<<<<<<< Updated upstream
-      - ./apps/auth/.env
-=======
       - ./apps/user-management/.env
     environment:
       RABBIT_MQ_URL: "amqp://admin:password@ms-rabbitmq/"
       DB_CONNECTION_STRING: "postgresql://postgres:password@ms-postgres/database"
->>>>>>> Stashed changes
     volumes:
       - ./libs:/app/libs
-      - ./apps/auth:/app/apps/auth
+      - ./apps/user-management:/app/apps/user-management
     ports:
       - 9230:9229
     networks:

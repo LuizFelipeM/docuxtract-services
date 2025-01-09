@@ -1,13 +1,9 @@
-import { DatabaseModule, Exchanges, RmqModule } from '@libs/common';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import * as Joi from 'joi';
-import { AuthController } from './auth.controller';
-import { AuthService } from './auth.service';
-import { Subscription } from './entities/subscription.entity';
-import { User } from './entities/user.entity';
+import { AuthModule } from './auth/auth.module';
 import { HealthcheckController } from './healthcheck/healthcheck.controller';
-import { UserRepository } from './repositories/user.repository';
+import { PermissionModule } from './permission/permission.module';
 import { WebhooksController } from './webhooks/webhooks.controller';
 
 @Module({
@@ -20,15 +16,14 @@ import { WebhooksController } from './webhooks/webhooks.controller';
         CLERK_PUBLISHABLE_KEY: Joi.string().required(),
         CLERK_AUTHORIZED_PARTIES: Joi.array(),
         CLERK_SIGNING_SECRET: Joi.string().required(),
+        PERMIT_SECRET_KEY: Joi.string().required(),
         RABBIT_MQ_URL: Joi.string().required(),
       }),
     }),
-    RmqModule.forRoot({ exchanges: [Exchanges.commands] }),
-    DatabaseModule.forRoot({
-      entities: [Subscription, User],
-    }),
+    AuthModule,
+    PermissionModule,
   ],
-  controllers: [HealthcheckController, AuthController, WebhooksController],
-  providers: [AuthController, AuthService, UserRepository],
+  controllers: [HealthcheckController, WebhooksController],
+  providers: [],
 })
-export class AuthModule {}
+export class UserManagementModule {}

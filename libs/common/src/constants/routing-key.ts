@@ -1,4 +1,7 @@
+import { Logger } from '@nestjs/common';
+
 export class RoutingKey {
+  private readonly logger = new Logger(RoutingKey.name);
   private readonly _value: string;
 
   constructor(...values: string[]) {
@@ -13,7 +16,7 @@ export class RoutingKey {
     return `${this._value}.#`;
   }
 
-  event(value: string): string {
-    return `${this._value}.${value}`;
+  withEvent(value?: string): string {
+    return `${this._value}${value ? `.${value}` : ''}`;
   }
 }

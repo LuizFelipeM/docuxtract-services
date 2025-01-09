@@ -7,31 +7,35 @@ import {
   ValidateIf,
 } from 'class-validator';
 
-export class CommandRequest<T, K = string> {
+export class CommandRequest<T, K = undefined> {
   @IsString()
   @IsNotEmpty()
   id: string;
 
   @IsNotEmpty()
-  type: K;
-
-  @IsNotEmpty()
   data: T;
 
-  constructor(type: K, data: T) {
-    this.type = type;
-    this.data = data;
-    this.id = CryptoUtils.generateHash(
-      JSON.stringify(type),
+  type: K;
+
+  static build<TData, KType = undefined>(
+    data: TData,
+    type: KType,
+  ): CommandRequest<TData, KType> {
+    const request = new CommandRequest<TData, KType>();
+    request.data = data;
+    request.type = type;
+    request.id = CryptoUtils.generateHash(
       JSON.stringify(data),
+      type ? JSON.stringify(type) : '',
     );
+    return request;
   }
 
-  response<K>(error: Error): CommandResponse<K>;
-  response<K>(data: K): CommandResponse<K>;
-  response<K>(data: K | Error): CommandResponse<K> {
+  response<R>(error: Error): CommandResponse<R>;
+  response<R>(data: R): CommandResponse<R>;
+  response<R>(data: R | Error): CommandResponse<R> {
     const isError = data instanceof Error;
-    return new CommandResponse<K>(
+    return CommandResponse.build(
       this.id,
       !isError,
       isError ? data : undefined,
@@ -56,16 +60,23 @@ export class CommandResponse<T> {
   @IsNotEmptyObject()
   data?: T;
 
-  constructor(id: string, success: boolean, error?: Error, data?: T) {
-    this.id = id;
-    this.success = success;
-    this.error = error;
-    this.data = data;
+  static build<TData>(
+    id: string,
+    success: boolean,
+    error?: Error,
+    data?: TData,
+  ) {
+    const response = new CommandResponse<TData>();
+    response.id = id;
+    response.success = success;
+    response.error = error;
+    response.data = data;
+    return response;
   }
 }
 
 export class Command {
-  static build<T, K = string>(type: K, data: T): CommandRequest<T, K> {
-    return new CommandRequest(type, data);
+  static build<T, K = undefined>(data: T, type: K): CommandRequest<T, K> {
+    return CommandRequest.build(data, type);
   }
 }

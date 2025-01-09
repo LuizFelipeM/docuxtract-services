@@ -44,19 +44,11 @@ services:
     ports:
       - 80:80
     depends_on:
-<<<<<<< Updated upstream
-      - orchestrator
-      - crm-int
-      - feedback
-      - payment
-      - auth
-=======
       - ms-orchestrator
       - ms-crm-int
       - ms-feedback
       - ms-payment
       - ms-user-management
->>>>>>> Stashed changes
     networks:
       - ms-services-net
   

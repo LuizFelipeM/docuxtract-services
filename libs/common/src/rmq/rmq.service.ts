@@ -4,7 +4,7 @@ import {
   CommandResponse,
   Event,
 } from '@libs/contracts/message-broker';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { Options } from 'amqplib';
 import { Exchange } from '../constants/exchange';
 import { Exchanges } from '../constants/exchanges';
@@ -27,6 +27,8 @@ interface EventPublishOptions<T = string, P = unknown> extends Options.Publish {
 
 @Injectable()
 export class RmqService {
+  private readonly logger = new Logger(RmqService.name);
+
   constructor(private readonly amqpConnection: AmqpConnection) {}
 
   private isRoutingKey(val: unknown): val is RoutingKey {
@@ -52,10 +54,11 @@ export class RmqService {
       this.isRoutingKey(opts)
         ? { exchange: exc, routingKey: opts, payload: pld, type: typ }
         : opts;
+
     return this.amqpConnection.request<CommandResponse<R>>({
       exchange: exchange?.name ?? Exchanges.commands.name,
-      routingKey: routingKey.event(String(type)),
-      payload: Command.build(type, payload),
+      routingKey: routingKey.withEvent(type ? String(type) : undefined),
+      payload: Command.build(payload, type),
       timeout: 5000,
       ...options,
     });
@@ -80,10 +83,11 @@ export class RmqService {
       this.isRoutingKey(opts)
         ? { exchange: exc, routingKey: opts, payload: pld, eventType: etyp }
         : opts;
+
     return this.amqpConnection.publish(
       exchange?.name ?? Exchanges.events.name,
-      routingKey.event(String(eventType)),
-      Event.build(eventType, payload),
+      routingKey.withEvent(eventType ? String(eventType) : undefined),
+      Event.build(payload, eventType),
       options,
     );
   }

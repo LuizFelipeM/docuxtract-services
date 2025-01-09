@@ -86,7 +86,7 @@ Check out a few resources that may come in handy when working with NestJS:
 
 ## Apps (microservices)
 
-- auth - Authentication service used to validate the user
+- user-management - Service responsible for user management related stuff, authentication, permissions, and so on
 - orchestrator - Responsible for microservice orchestration in complex workflows
 - crm-int - Customer Relationship Management (CRM) tools integration
 - email-int - E-mail tools integration
@@ -105,3 +105,16 @@ Nest is an MIT-licensed open source project. It can grow thanks to the sponsors 
 ## License
 
 Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+
+
+## To do
+
+- [x] ~~*Integrate Clerk*~~
+- [x] ~~*Integrate Stripe*~~
+- [x] ~~*Integrate Permit.io*~~
+- [x] ~~*Bind Clerk UserId to Stripe Subscription*~~
+- [x] ~~*Propagate event when a Stripe subscription is created/updated/deleted*~~
+- [x] ~~*Consume Stripe subscription in User Management service*~~
+- [x] ~~*Bind Stripe Subscription to Clerk User*~~
+- [ ] Update Clerk User according Stripe subscription events
+- [ ] Create permissions in Permit.io based on Clerk User, Stripe Subscription and Resources

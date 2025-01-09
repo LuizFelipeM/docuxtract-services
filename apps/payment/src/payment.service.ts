@@ -1,6 +1,9 @@
+import { User } from '@clerk/backend';
 import { RmqService, RoutingKeys } from '@libs/common';
+import { GetUserDto } from '@libs/contracts/auth';
 import {
   CustomerSubscriptionCreatedDto,
+  CustomerSubscriptionEvents,
   SubscriptionStatus,
 } from '@libs/contracts/payment';
 import { Injectable, Logger, RawBodyRequest } from '@nestjs/common';
@@ -31,17 +34,26 @@ export class PaymentService {
   }
 
   async createCheckoutSession(
+    userId: string,
     lookupKey: string,
   ): Promise<Stripe.Response<Stripe.Checkout.Session>> {
     const prices = await this.stripe.prices.list({
       lookup_keys: [lookupKey],
-      expand: ['data.product'],
+      expand: [],
     });
-    this.logger.log(`id ${prices.data[0].id}`);
+    const { data, success, error } = await this.rmqService.request<
+      GetUserDto,
+      User
+    >({
+      routingKey: RoutingKeys.auth.getUser,
+      payload: { userId },
+    });
+
+    if (!success) throw error;
 
     const domain = this.configService.get<string>('DOMAIN');
+    const userEmail = data.emailAddresses[0].emailAddress;
     const session = await this.stripe.checkout.sessions.create({
-      billing_address_collection: 'auto',
       line_items: [
         {
           price: prices.data[0].id,
@@ -49,6 +61,14 @@ export class PaymentService {
         },
       ],
       mode: 'subscription',
+      subscription_data: {
+        metadata: {
+          userId,
+          userEmail,
+        },
+      },
+      client_reference_id: userId,
+      customer_email: userEmail,
       success_url: `${domain}/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${domain}/canceled`,
     });
@@ -80,7 +100,6 @@ export class PaymentService {
       return_url: this.configService.get<string>('DOMAIN'),
     });
 
-    this.logger.log(`Customer portal session ${JSON.stringify(session)}`);
     return session;
   }
 
@@ -120,25 +139,18 @@ export class PaymentService {
 
     switch (event.type) {
       case 'customer.subscription.trial_will_end':
-        this.logger.log(`Subscription status is ${event.data.object.status}.`);
         this.handleSubscriptionTrialEnding(event.data.object);
         break;
       case 'customer.subscription.deleted':
-        this.logger.log(`Subscription status is ${event.data.object.status}.`);
         this.handleSubscriptionDeleted(event.data.object);
         break;
       case 'customer.subscription.created':
-        this.logger.log(`Subscription status is ${event.data.object.status}.`);
         await this.handleSubscriptionCreated(event.data.object);
         break;
       case 'customer.subscription.updated':
-        this.logger.log(`Subscription status is ${event.data.object.status}.`);
         this.handleSubscriptionUpdated(event.data.object);
         break;
       case 'entitlements.active_entitlement_summary.updated':
-        this.logger.log(
-          `Active entitlement summary updated for ${event.data.object}.`,
-        );
         this.handleEntitlementUpdated(event.data.object);
         break;
       default:
@@ -159,25 +171,25 @@ export class PaymentService {
     subscription: Stripe.Subscription,
   ): Promise<boolean> {
     const customerId = subscription.customer.toString();
-    const customer = await this.stripe.customers.retrieve(customerId);
+    const { userId, userEmail } = subscription.metadata;
+
     const payload: CustomerSubscriptionCreatedDto = {
       customer: {
         id: customerId,
-        email: customer.deleted
-          ? undefined
-          : (customer as Stripe.Customer).email,
+        email: userEmail,
+      },
+      user: {
+        id: userId,
+        email: userEmail,
       },
       expiresAt: new Date(subscription.current_period_end),
       status: SubscriptionStatus[subscription.status],
-      claims: subscription.items.data.map((item) =>
-        item.plan.product.toString(),
-      ),
     };
 
-    return this.rmqService.publish(
+    return await this.rmqService.publish(
       RoutingKeys.payment.customerSubscription,
       payload,
-      'created',
+      CustomerSubscriptionEvents.created,
     );
   }
 
