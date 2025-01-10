@@ -5,6 +5,11 @@ import {
   verifyToken,
 } from '@clerk/backend';
 import type { JwtPayload } from '@clerk/types';
+import {
+  CustomerSubscriptionCreatedDto,
+  CustomerSubscriptionDeletedDto,
+  CustomerSubscriptionUpdatedDto,
+} from '@libs/contracts/payment';
 import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
@@ -33,12 +38,27 @@ export class AuthService {
     ).data[0];
   }
 
-  async updateUserPublicMetadata(
-    userId: string,
-    publicMetadata: Record<string, unknown>,
-  ): Promise<User> {
-    return await this.clerkClient.users.updateUserMetadata(userId, {
-      publicMetadata,
+  async updateUserSubscription(
+    subscription:
+      | CustomerSubscriptionCreatedDto
+      | CustomerSubscriptionUpdatedDto,
+  ): Promise<void> {
+    await this.clerkClient.users.updateUserMetadata(subscription.user.id, {
+      privateMetadata: {
+        subs: {
+          cid: subscription.customer.id,
+          sts: subscription.status,
+          exp: new Date(subscription.expiresAt).getTime(),
+        },
+      },
+    });
+  }
+
+  async clearUserSubscription(
+    subscription: CustomerSubscriptionDeletedDto,
+  ): Promise<void> {
+    await this.clerkClient.users.updateUserMetadata(subscription.user.id, {
+      privateMetadata: { subs: { cid: null, sts: null, exp: null } },
     });
   }
 

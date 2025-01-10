@@ -116,5 +116,5 @@ Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
 - [x] ~~*Propagate event when a Stripe subscription is created/updated/deleted*~~
 - [x] ~~*Consume Stripe subscription in User Management service*~~
 - [x] ~~*Bind Stripe Subscription to Clerk User*~~
-- [ ] Update Clerk User according Stripe subscription events
+- [x] ~~*Update Clerk User according Stripe subscription events*~~
 - [ ] Create permissions in Permit.io based on Clerk User, Stripe Subscription and Resources

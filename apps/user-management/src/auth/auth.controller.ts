@@ -13,7 +13,6 @@ import {
   CommandResponse,
 } from '@libs/contracts/message-broker';
 import {
-  CustomerSubscriptionCreatedDto,
   CustomerSubscriptionEvent,
   CustomerSubscriptionEvents,
 } from '@libs/contracts/payment';
@@ -71,27 +70,14 @@ export class AuthController {
     try {
       switch (type) {
         case CustomerSubscriptionEvents.created:
-          return await this.newCustomerSubscription(data);
-        case CustomerSubscriptionEvents.deleted:
-          break;
         case CustomerSubscriptionEvents.updated:
-          break;
+          return await this.authService.updateUserSubscription(data);
+        case CustomerSubscriptionEvents.deleted:
+          return await this.authService.clearUserSubscription(data);
       }
     } catch (err) {
       this.logger.error(err);
       return new Nack();
     }
-  }
-
-  private async newCustomerSubscription(
-    subscription: CustomerSubscriptionCreatedDto,
-  ): Promise<void> {
-    await this.authService.updateUserPublicMetadata(subscription.user.id, {
-      subs: {
-        cid: subscription.customer.id,
-        sts: subscription.status,
-        exp: new Date(subscription.expiresAt).getTime(),
-      },
-    });
   }
 }

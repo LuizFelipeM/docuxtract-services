@@ -3,9 +3,11 @@ import { RmqService, RoutingKeys } from '@libs/common';
 import { GetUserDto } from '@libs/contracts/auth';
 import {
   CustomerSubscriptionCreatedDto,
+  CustomerSubscriptionDeletedDto,
   CustomerSubscriptionEvents,
-  SubscriptionStatus,
+  CustomerSubscriptionUpdatedDto,
 } from '@libs/contracts/payment';
+import { SubscriptionStatus } from '@libs/contracts/payment/customer-subscription/subscription-status';
 import { Injectable, Logger, RawBodyRequest } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Request } from 'express';
@@ -142,13 +144,13 @@ export class PaymentService {
         this.handleSubscriptionTrialEnding(event.data.object);
         break;
       case 'customer.subscription.deleted':
-        this.handleSubscriptionDeleted(event.data.object);
+        await this.handleSubscriptionDeleted(event.data.object);
         break;
       case 'customer.subscription.created':
         await this.handleSubscriptionCreated(event.data.object);
         break;
       case 'customer.subscription.updated':
-        this.handleSubscriptionUpdated(event.data.object);
+        await this.handleSubscriptionUpdated(event.data.object);
         break;
       case 'entitlements.active_entitlement_summary.updated':
         this.handleEntitlementUpdated(event.data.object);
@@ -163,8 +165,29 @@ export class PaymentService {
     throw new Error('Function not implemented.');
   }
 
-  private handleSubscriptionDeleted(subscription: Stripe.Subscription) {
-    throw new Error('Function not implemented.');
+  private async handleSubscriptionDeleted(
+    subscription: Stripe.Subscription,
+  ): Promise<boolean> {
+    const customerId = subscription.customer.toString();
+    const { userId, userEmail } = subscription.metadata;
+
+    const payload: CustomerSubscriptionDeletedDto = {
+      customer: {
+        id: customerId,
+        email: userEmail,
+      },
+      user: {
+        id: userId,
+        email: userEmail,
+      },
+      status: SubscriptionStatus[subscription.status],
+    };
+
+    return await this.rmqService.publish(
+      RoutingKeys.payment.customerSubscription,
+      payload,
+      CustomerSubscriptionEvents.deleted,
+    );
   }
 
   private async handleSubscriptionCreated(
@@ -193,8 +216,30 @@ export class PaymentService {
     );
   }
 
-  private handleSubscriptionUpdated(subscription: Stripe.Subscription) {
-    throw new Error('Function not implemented.');
+  private async handleSubscriptionUpdated(
+    subscription: Stripe.Subscription,
+  ): Promise<boolean> {
+    const customerId = subscription.customer.toString();
+    const { userId, userEmail } = subscription.metadata;
+
+    const payload: CustomerSubscriptionUpdatedDto = {
+      customer: {
+        id: customerId,
+        email: userEmail,
+      },
+      user: {
+        id: userId,
+        email: userEmail,
+      },
+      expiresAt: new Date(subscription.current_period_end),
+      status: SubscriptionStatus[subscription.status],
+    };
+
+    return await this.rmqService.publish(
+      RoutingKeys.payment.customerSubscription,
+      payload,
+      CustomerSubscriptionEvents.updated,
+    );
   }
 
   private handleEntitlementUpdated(
