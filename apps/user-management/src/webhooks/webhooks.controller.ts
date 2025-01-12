@@ -10,7 +10,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { Request } from 'express';
 import { Webhook as SvixWebhook } from 'svix';
-import { PermissionService } from '../permission/permission.service';
+import { PermissionsService } from '../permissions/permissions.service';
 
 @Controller('webhooks')
 export class WebhooksController {
@@ -19,7 +19,7 @@ export class WebhooksController {
 
   constructor(
     private readonly configService: ConfigService,
-    private readonly permissionService: PermissionService,
+    private readonly permissionService: PermissionsService,
   ) {
     this.clerkWebhook = new SvixWebhook(
       this.configService.get<string>('CLERK_SIGNING_SECRET'),
@@ -50,11 +50,11 @@ export class WebhooksController {
       case 'user.created':
         userId = event.data.id;
         customerId = String(event.data.public_metadata.customer_id);
-        this.permissionService.syncUser(
-          userId,
-          customerId,
-          event.data.primary_email_address_id,
-        );
+        // this.permissionService.syncUser(
+        //   userId,
+        //   customerId,
+        //   event.data.primary_email_address_id,
+        // );
         break;
 
       case 'user.updated':

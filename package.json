@@ -45,7 +45,8 @@
     "rxjs": "^7.8.1",
     "stripe": "^17.5.0",
     "svix": "^1.44.0",
-    "typeorm": "^0.3.20"
+    "typeorm": "^0.3.20",
+    "unique-names-generator": "^4.7.1"
   },
   "devDependencies": {
     "@clerk/types": "^4.39.0",

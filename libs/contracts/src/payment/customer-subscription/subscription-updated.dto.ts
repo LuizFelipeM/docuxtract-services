@@ -1,15 +1,19 @@
-import { IsInstance, IsNotEmpty } from 'class-validator';
+import { IsDate, IsInstance, ValidateIf } from 'class-validator';
 import { CustomerDto } from './customer.dto';
 import { SubscriptionStatus } from './subscription-status';
 import { UserDto } from './user.dto';
 
-export class CustomerSubscriptionDeletedDto {
+export class SubscriptionUpdatedDto {
+  @ValidateIf((o) => !o.customer)
   @IsInstance(UserDto)
   user: UserDto;
 
+  @ValidateIf((o) => !o.user)
   @IsInstance(CustomerDto)
   customer: CustomerDto;
 
-  @IsNotEmpty()
-  status: SubscriptionStatus;
+  status?: SubscriptionStatus;
+
+  @IsDate()
+  expiresAt?: Date;
 }

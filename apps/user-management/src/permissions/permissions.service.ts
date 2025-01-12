@@ -1,9 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { IResource, IUser, Permit } from 'permitio';
 
 @Injectable()
-export class PermissionService {
+export class PermissionsService {
+  private readonly logger = new Logger(PermissionsService.name);
   private readonly permit: Permit;
 
   constructor(private readonly configService: ConfigService) {
@@ -25,12 +26,20 @@ export class PermissionService {
   async syncUser(
     userId: string,
     email: string,
-    customerId?: string,
+    attributes?: Record<string, any>,
   ): Promise<void> {
     await this.permit.api.users.sync({
       key: userId,
       email,
-      attributes: { customerId },
+      attributes,
     });
+  }
+
+  async revokeUserPermissions(userId: string): Promise<void> {
+    try {
+      await this.permit.api.deleteUser(userId);
+    } catch (error) {
+      this.logger.error(error);
+    }
   }
 }

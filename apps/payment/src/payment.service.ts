@@ -2,16 +2,19 @@ import { User } from '@clerk/backend';
 import { RmqService, RoutingKeys } from '@libs/common';
 import { GetUserDto } from '@libs/contracts/auth';
 import {
-  CustomerSubscriptionCreatedDto,
-  CustomerSubscriptionDeletedDto,
   CustomerSubscriptionEvents,
-  CustomerSubscriptionUpdatedDto,
+  SubscriptionCreatedDto,
+  SubscriptionDeletedDto,
+  SubscriptionUpdatedDto,
 } from '@libs/contracts/payment';
+import { EntitlementDto } from '@libs/contracts/payment/customer-subscription/entitlement.dto';
 import { SubscriptionStatus } from '@libs/contracts/payment/customer-subscription/subscription-status';
 import { Injectable, Logger, RawBodyRequest } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Request } from 'express';
 import Stripe from 'stripe';
+
+type LineItem = Stripe.Checkout.SessionCreateParams.LineItem;
 
 @Injectable()
 export class PaymentService {
@@ -37,10 +40,10 @@ export class PaymentService {
 
   async createCheckoutSession(
     userId: string,
-    lookupKey: string,
+    lookupKeys: Record<string, { quantity: { min: number; max?: number } }>,
   ): Promise<Stripe.Response<Stripe.Checkout.Session>> {
     const prices = await this.stripe.prices.list({
-      lookup_keys: [lookupKey],
+      lookup_keys: Object.keys(lookupKeys),
       expand: [],
     });
     const { data, success, error } = await this.rmqService.request<
@@ -56,12 +59,22 @@ export class PaymentService {
     const domain = this.configService.get<string>('DOMAIN');
     const userEmail = data.emailAddresses[0].emailAddress;
     const session = await this.stripe.checkout.sessions.create({
-      line_items: [
-        {
-          price: prices.data[0].id,
-          quantity: 1,
-        },
-      ],
+      line_items: prices.data.map<LineItem>(({ id, lookup_key }) => {
+        let adjustable_quantity: LineItem['adjustable_quantity'] = undefined;
+
+        if (!!lookupKeys[lookup_key].quantity.max)
+          adjustable_quantity = {
+            enabled: true,
+            minimum: lookupKeys[lookup_key].quantity.min,
+            maximum: lookupKeys[lookup_key].quantity.max,
+          };
+
+        return {
+          price: id,
+          quantity: lookupKeys[lookup_key].quantity.min,
+          adjustable_quantity,
+        };
+      }),
       mode: 'subscription',
       subscription_data: {
         metadata: {
@@ -140,6 +153,9 @@ export class PaymentService {
     }
 
     switch (event.type) {
+      case 'checkout.session.completed':
+        event.data.object.client_reference_id;
+        break;
       case 'customer.subscription.trial_will_end':
         this.handleSubscriptionTrialEnding(event.data.object);
         break;
@@ -151,9 +167,6 @@ export class PaymentService {
         break;
       case 'customer.subscription.updated':
         await this.handleSubscriptionUpdated(event.data.object);
-        break;
-      case 'entitlements.active_entitlement_summary.updated':
-        this.handleEntitlementUpdated(event.data.object);
         break;
       default:
         this.logger.error(`Unhandled event type ${event.type}.`);
@@ -168,12 +181,11 @@ export class PaymentService {
   private async handleSubscriptionDeleted(
     subscription: Stripe.Subscription,
   ): Promise<boolean> {
-    const customerId = subscription.customer.toString();
     const { userId, userEmail } = subscription.metadata;
 
-    const payload: CustomerSubscriptionDeletedDto = {
+    const payload: SubscriptionDeletedDto = {
       customer: {
-        id: customerId,
+        id: subscription.customer.toString(),
         email: userEmail,
       },
       user: {
@@ -190,21 +202,38 @@ export class PaymentService {
     );
   }
 
+  private async getEntitlements(
+    subscription: Stripe.Subscription,
+  ): Promise<EntitlementDto[]> {
+    return (
+      await Promise.all(
+        subscription.items.data.map(async ({ price, quantity }) =>
+          (
+            await this.stripe.products.listFeatures(price.product.toString())
+          ).data.map<EntitlementDto>(({ entitlement_feature }) => ({
+            name: entitlement_feature.lookup_key,
+            attributes: { quantity },
+          })),
+        ),
+      )
+    ).flat();
+  }
+
   private async handleSubscriptionCreated(
     subscription: Stripe.Subscription,
   ): Promise<boolean> {
-    const customerId = subscription.customer.toString();
     const { userId, userEmail } = subscription.metadata;
 
-    const payload: CustomerSubscriptionCreatedDto = {
+    const payload: SubscriptionCreatedDto = {
       customer: {
-        id: customerId,
+        id: subscription.customer.toString(),
         email: userEmail,
       },
       user: {
         id: userId,
         email: userEmail,
       },
+      entitlements: await this.getEntitlements(subscription),
       expiresAt: new Date(subscription.current_period_end),
       status: SubscriptionStatus[subscription.status],
     };
@@ -219,12 +248,11 @@ export class PaymentService {
   private async handleSubscriptionUpdated(
     subscription: Stripe.Subscription,
   ): Promise<boolean> {
-    const customerId = subscription.customer.toString();
     const { userId, userEmail } = subscription.metadata;
 
-    const payload: CustomerSubscriptionUpdatedDto = {
+    const payload: SubscriptionUpdatedDto = {
       customer: {
-        id: customerId,
+        id: subscription.customer.toString(),
         email: userEmail,
       },
       user: {
@@ -240,11 +268,5 @@ export class PaymentService {
       payload,
       CustomerSubscriptionEvents.updated,
     );
-  }
-
-  private handleEntitlementUpdated(
-    subscription: Stripe.Entitlements.ActiveEntitlementSummary,
-  ) {
-    throw new Error('Function not implemented.');
   }
 }

@@ -6,11 +6,11 @@ import {
 import { Exchanges, RoutingKeys } from '@libs/common';
 import { CustomerSubscriptionEvent } from '@libs/contracts/payment';
 import { Controller, Get, Param, Query } from '@nestjs/common';
-import { PermissionService } from './permission.service';
+import { PermissionsService } from './permissions.service';
 
 @Controller()
 export class PermissionController {
-  constructor(private readonly permissionService: PermissionService) {}
+  constructor(private readonly permissionService: PermissionsService) {}
 
   @Get(':userId')
   async check(

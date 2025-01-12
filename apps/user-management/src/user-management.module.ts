@@ -3,8 +3,10 @@ import { ConfigModule } from '@nestjs/config';
 import * as Joi from 'joi';
 import { AuthModule } from './auth/auth.module';
 import { HealthcheckController } from './healthcheck/healthcheck.controller';
-import { PermissionModule } from './permission/permission.module';
+import { OrganizationsModule } from './organizations/organizations.module';
+import { PermissionsModule } from './permissions/permissions.module';
 import { WebhooksController } from './webhooks/webhooks.controller';
+import { SubscriptionsModule } from './subscriptions/subscriptions.module';
 
 @Module({
   imports: [
@@ -21,7 +23,9 @@ import { WebhooksController } from './webhooks/webhooks.controller';
       }),
     }),
     AuthModule,
-    PermissionModule,
+    PermissionsModule,
+    OrganizationsModule,
+    SubscriptionsModule,
   ],
   controllers: [HealthcheckController, WebhooksController],
   providers: [],

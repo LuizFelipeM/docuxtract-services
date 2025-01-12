@@ -118,3 +118,4 @@ Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
 - [x] ~~*Bind Stripe Subscription to Clerk User*~~
 - [x] ~~*Update Clerk User according Stripe subscription events*~~
 - [ ] Create permissions in Permit.io based on Clerk User, Stripe Subscription and Resources
+- [ ] Create a database schema and see the service it fits to handle 1 subscription to N users

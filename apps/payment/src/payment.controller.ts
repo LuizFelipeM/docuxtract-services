@@ -1,4 +1,4 @@
-import { CurrentUserId, JwtAuthGuard } from '@libs/common';
+import { JwtAuthGuard } from '@libs/common';
 import {
   Body,
   Controller,
@@ -22,15 +22,23 @@ export class PaymentController {
   constructor(private readonly paymentService: PaymentService) {}
 
   @Post('checkout')
-  @UseGuards(JwtAuthGuard)
+  // @UseGuards(JwtAuthGuard)
   @Redirect(undefined, HttpStatus.SEE_OTHER)
   async createCheckoutSession(
-    @CurrentUserId() userId: string,
+    // @CurrentUserId() userId: string,
     @Body() createCheckoutSessionDto: CreateCheckoutSessionDto,
   ): Promise<{ url: string }> {
     const session = await this.paymentService.createCheckoutSession(
-      userId,
-      createCheckoutSessionDto.lookupKey,
+      // userId,
+
+      // createCheckoutSessionDto.lookupKey
+      {
+        premium_platform_access: { quantity: { min: 1 } },
+        premium_platform_users_quantity_access: {
+          quantity: { min: 10, max: 100 },
+        },
+        platform_integration: { quantity: { min: 3, max: 5 } },
+      },
     );
 
     return { url: session.url };

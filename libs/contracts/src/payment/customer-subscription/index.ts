@@ -1,11 +1,11 @@
 import { Event } from '../../message-broker/event';
-import { CustomerSubscriptionCreatedDto } from './customer-subscription-created.dto';
-import { CustomerSubscriptionDeletedDto } from './customer-subscription-deleted.dto';
-import { CustomerSubscriptionUpdatedDto } from './customer-subscription-updated.dto';
+import { SubscriptionCreatedDto } from './subscription-created.dto';
+import { SubscriptionDeletedDto } from './subscription-deleted.dto';
+import { SubscriptionUpdatedDto } from './subscription-updated.dto';
 
-export * from './customer-subscription-created.dto';
-export * from './customer-subscription-deleted.dto';
-export * from './customer-subscription-updated.dto';
+export * from './subscription-created.dto';
+export * from './subscription-deleted.dto';
+export * from './subscription-updated.dto';
 
 export enum CustomerSubscriptionEvents {
   created = 'created',
@@ -14,15 +14,15 @@ export enum CustomerSubscriptionEvents {
 }
 
 export type CreatedCustomerSubscriptionEvent = Event<
-  CustomerSubscriptionCreatedDto,
+  SubscriptionCreatedDto,
   CustomerSubscriptionEvents.created
 >;
 export type DeletedCustomerSubscriptionEvent = Event<
-  CustomerSubscriptionDeletedDto,
+  SubscriptionDeletedDto,
   CustomerSubscriptionEvents.deleted
 >;
 export type UpdatedCustomerSubscriptionEvent = Event<
-  CustomerSubscriptionUpdatedDto,
+  SubscriptionUpdatedDto,
   CustomerSubscriptionEvents.updated
 >;
 
