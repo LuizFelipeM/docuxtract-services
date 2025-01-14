@@ -12,8 +12,10 @@ import {
   colors,
   uniqueNamesGenerator,
 } from 'unique-names-generator';
+import { CreateOrganizationDto } from '../organizations/dtos/create-organization.dto';
 import { OrganizationsService } from '../organizations/organizations.service';
-import { PermissionsService } from '../permissions/permissions.service';
+import { Role } from '../role';
+import { UsersService } from '../users/users.service';
 
 @Injectable()
 export class SubscriptionsService {
@@ -21,52 +23,65 @@ export class SubscriptionsService {
 
   constructor(
     private readonly organizationsService: OrganizationsService,
-    private readonly permissionsService: PermissionsService,
+    private readonly usersService: UsersService,
   ) {}
 
   async handleCreatedSubscription(
     subscription: SubscriptionCreatedDto,
   ): Promise<void> {
-    // const attributes = subscription.entitlements.reduce((prev, curr) => {
-    //   if (curr.name === 'user_licenses') return prev;
-    //   return { ...prev, [curr.name]: curr.attributes };
-    // }, {});
-
-    const organization = await this.createOrganization(subscription);
-
-    await this.permissionsService.syncUser(organization.id, {
-      id: subscription.user.id,
-      email: subscription.user.email,
-      attributes: { organization_id: organization.id },
-    });
-  }
-
-  private async createOrganization(
-    subscription: SubscriptionCreatedDto,
-  ): Promise<Organization> {
-    let organization = await this.organizationsService.getUserOrganization(
-      subscription.user.id,
-    );
-    if (organization) return organization;
-
     const userLicensesEntitlement = subscription.entitlements.find(
-      (e) => e.name === 'user_licenses',
+      (e) => e.name === 'userLicenses',
     );
     if (!userLicensesEntitlement)
       throw new Error('No user licenses entitlement found');
 
-    organization = await this.organizationsService.create(
-      subscription.user.id,
-      uniqueNamesGenerator({
-        dictionaries: [adjectives, colors, animals],
-        length: 3,
-        separator: ' ',
-        style: 'capital',
-      }),
-      Number(userLicensesEntitlement.attributes.quantity),
+    const createOrganization = new CreateOrganizationDto();
+
+    createOrganization.userId = subscription.user.id;
+    createOrganization.maxUsers = Number(
+      userLicensesEntitlement.attributes.quantity,
+    );
+    createOrganization.name = uniqueNamesGenerator({
+      dictionaries: [adjectives, colors, animals],
+      length: 3,
+      separator: ' ',
+      style: 'capital',
+    });
+    createOrganization.attributes = subscription.entitlements.reduce(
+      (prev, curr) => {
+        if (curr.name === 'userLicenses') return prev;
+        return { ...prev, [curr.name]: curr.attributes };
+      },
+      {},
     );
 
-    this.logger.log(`Organization ${organization.id} created`);
+    const organization = await this.createOrganization(createOrganization);
+
+    await this.usersService.sync({
+      userId: subscription.user.id,
+      organizationId: organization.id,
+      email: subscription.user.email,
+      roles: [Role.owner],
+    });
+  }
+
+  private async createOrganization({
+    userId,
+    maxUsers,
+    name,
+    slug,
+    attributes,
+  }: CreateOrganizationDto): Promise<Organization> {
+    let organization =
+      await this.organizationsService.getUserOrganization(userId);
+    if (organization) return organization;
+
+    organization = await this.organizationsService.create(
+      userId,
+      name,
+      maxUsers,
+      { slug, attributes },
+    );
     return organization;
   }
 
@@ -94,9 +109,11 @@ export class SubscriptionsService {
           new PaginationParams({ limit, page }),
         ));
 
-      data.forEach((userId) => {
-        this.permissionsService.revokeUserPermissions(userId);
-      });
+      await Promise.all(
+        data.map((userId) => {
+          this.usersService.revokePermissions(userId, organization.id);
+        }),
+      );
 
       if (hasMore) page++;
     } while (hasMore);

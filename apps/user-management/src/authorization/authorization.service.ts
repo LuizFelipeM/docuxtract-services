@@ -1,18 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { IResource, IUser, Permit } from 'permitio';
-import { Role } from '../role';
-
-interface SyncUserParams {
-  id: string;
-  email: string;
-  roles?: Role[];
-  attributes?: Record<string, any>;
-}
 
 @Injectable()
-export class PermissionsService {
-  private readonly logger = new Logger(PermissionsService.name);
+export class AuthorizationService {
+  private readonly logger = new Logger(AuthorizationService.name);
   private readonly permit: Permit;
 
   constructor(private readonly configService: ConfigService) {

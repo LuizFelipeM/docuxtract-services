@@ -9,13 +9,20 @@ import { PaginatedResource } from '@libs/contracts/paginated-resource';
 import { PaginationParams } from '@libs/contracts/pagination-params';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { Permit } from 'permitio';
 import { Role } from '../role';
 import { UpdateOrganizationDto } from './dtos/update-organization.dto';
+
+interface CreateOrganizationParams {
+  slug?: string;
+  attributes?: Record<string, unknown>;
+}
 
 @Injectable()
 export class OrganizationsService {
   private readonly logger = new Logger(OrganizationsService.name);
   private readonly clerkClient: ClerkClient;
+  private readonly permit: Permit;
 
   constructor(private readonly configService: ConfigService) {
     const secretKey = this.configService.get<string>('CLERK_SECRET_KEY');
@@ -27,23 +34,52 @@ export class OrganizationsService {
       secretKey,
       publishableKey,
     });
+
+    this.permit = new Permit({
+      pdp: this.configService.get<string>('PERMITIO_PDP'),
+      token: this.configService.get<string>('PERMITIO_SECRET_KEY'),
+    });
   }
 
   async create(
     userId: string,
     name: string,
     maxUsers: number,
-    slug?: string,
+    params?: CreateOrganizationParams,
   ): Promise<Organization> {
     try {
-      return await this.clerkClient.organizations.createOrganization({
-        name,
-        createdBy: userId,
-        maxAllowedMemberships: maxUsers,
-        slug,
+      const organization =
+        await this.clerkClient.organizations.createOrganization({
+          name,
+          createdBy: userId,
+          maxAllowedMemberships: maxUsers,
+          slug: params.slug,
+        });
+
+      await this.createPermitTenant(organization.id, name, {
+        ...params.attributes,
+        maxUserLicensesCount: maxUsers,
       });
+      return organization;
     } catch (error) {
       this.logger.error(error);
+      throw error;
+    }
+  }
+
+  private async createPermitTenant(
+    organizationId: string,
+    name: string,
+    attributes?: Record<string, unknown>,
+  ): Promise<void> {
+    try {
+      await this.permit.api.tenants.get(organizationId);
+    } catch (error) {
+      await this.permit.api.tenants.create({
+        key: organizationId,
+        name,
+        attributes,
+      });
     }
   }
 

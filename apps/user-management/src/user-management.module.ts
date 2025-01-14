@@ -7,6 +7,9 @@ import { OrganizationsModule } from './organizations/organizations.module';
 import { PermissionsModule } from './permissions/permissions.module';
 import { SubscriptionsModule } from './subscriptions/subscriptions.module';
 import { WebhooksController } from './webhooks/webhooks.controller';
+import { AuthorizationModule } from './authorization/authorization.module';
+import { UserModule } from './user/user.module';
+import { UsersModule } from './users/users.module';
 
 @Module({
   imports: [
@@ -27,6 +30,9 @@ import { WebhooksController } from './webhooks/webhooks.controller';
     PermissionsModule,
     OrganizationsModule,
     SubscriptionsModule,
+    AuthorizationModule,
+    UserModule,
+    UsersModule,
   ],
   controllers: [HealthcheckController, WebhooksController],
   providers: [],
