@@ -5,8 +5,8 @@ import { AuthModule } from './auth/auth.module';
 import { HealthcheckController } from './healthcheck/healthcheck.controller';
 import { OrganizationsModule } from './organizations/organizations.module';
 import { PermissionsModule } from './permissions/permissions.module';
-import { WebhooksController } from './webhooks/webhooks.controller';
 import { SubscriptionsModule } from './subscriptions/subscriptions.module';
+import { WebhooksController } from './webhooks/webhooks.controller';
 
 @Module({
   imports: [
@@ -18,7 +18,8 @@ import { SubscriptionsModule } from './subscriptions/subscriptions.module';
         CLERK_PUBLISHABLE_KEY: Joi.string().required(),
         CLERK_AUTHORIZED_PARTIES: Joi.array(),
         CLERK_SIGNING_SECRET: Joi.string().required(),
-        PERMIT_SECRET_KEY: Joi.string().required(),
+        PERMITIO_PDP: Joi.string().required(),
+        PERMITIO_SECRET_KEY: Joi.string().required(),
         RABBIT_MQ_URL: Joi.string().required(),
       }),
     }),

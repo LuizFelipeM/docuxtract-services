@@ -71,6 +71,17 @@ services:
       - ms-nginx
     networks:
       - ms-services-net
+  
+  ms-permitio:
+    container_name: ms-permitio
+    image: permitio/pdp-v2:latest
+    restart: always
+    env_file:
+      - ./.env
+    ports:
+      - 7766:7000
+    networks:
+      - ms-services-net
 
 volumes:
   pgdata:
