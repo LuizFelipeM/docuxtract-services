@@ -1,10 +1,10 @@
-import { Organization } from '@clerk/backend';
 import { PaginationParams } from '@libs/contracts/pagination-params';
 import {
   SubscriptionCreatedDto,
   SubscriptionDeletedDto,
   SubscriptionUpdatedDto,
 } from '@libs/contracts/payment';
+import { SubscriptionStatus } from '@libs/contracts/payment/customer-subscription/subscription-status';
 import { Injectable, Logger } from '@nestjs/common';
 import {
   adjectives,
@@ -29,6 +29,14 @@ export class SubscriptionsService {
   async handleCreatedSubscription(
     subscription: SubscriptionCreatedDto,
   ): Promise<void> {
+    this.logger.log(`Created subscription`);
+  }
+
+  async handleUpdatedSubscription(
+    subscription: SubscriptionUpdatedDto,
+  ): Promise<void> {
+    if (subscription.status !== SubscriptionStatus.active) return;
+
     const userLicensesEntitlement = subscription.entitlements.find(
       (e) => e.name === 'userLicenses',
     );
@@ -48,47 +56,21 @@ export class SubscriptionsService {
       style: 'capital',
     });
     createOrganization.attributes = subscription.entitlements.reduce(
-      (prev, curr) => {
-        if (curr.name === 'userLicenses') return prev;
-        return { ...prev, [curr.name]: curr.attributes };
-      },
+      (prev, curr) =>
+        curr.name === 'userLicenses'
+          ? prev
+          : { ...prev, [curr.name]: curr.attributes },
       {},
     );
 
-    const organization = await this.createOrganization(createOrganization);
-
+    const organization =
+      await this.organizationsService.create(createOrganization);
     await this.usersService.sync({
       userId: subscription.user.id,
       organizationId: organization.id,
       email: subscription.user.email,
       roles: [Role.owner],
     });
-  }
-
-  private async createOrganization({
-    userId,
-    maxUsers,
-    name,
-    slug,
-    attributes,
-  }: CreateOrganizationDto): Promise<Organization> {
-    let organization =
-      await this.organizationsService.getUserOrganization(userId);
-    if (organization) return organization;
-
-    organization = await this.organizationsService.create(
-      userId,
-      name,
-      maxUsers,
-      { slug, attributes },
-    );
-    return organization;
-  }
-
-  async handleUpdatedSubscription(
-    subscription: SubscriptionUpdatedDto,
-  ): Promise<void> {
-    this.logger.log(`Updated subscription`);
   }
 
   async handleDeletedSubscription(

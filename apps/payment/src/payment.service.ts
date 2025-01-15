@@ -261,6 +261,7 @@ export class PaymentService {
       },
       expiresAt: new Date(subscription.current_period_end),
       status: SubscriptionStatus[subscription.status],
+      entitlements: await this.getEntitlements(subscription),
     };
 
     return await this.rmqService.publish(

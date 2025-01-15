@@ -9,19 +9,15 @@ import { PaginatedResource } from '@libs/contracts/paginated-resource';
 import { PaginationParams } from '@libs/contracts/pagination-params';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Permit } from 'permitio';
+import { Permit, PermitApiError } from 'permitio';
 import { Role } from '../role';
+import { CreateOrganizationDto } from './dtos/create-organization.dto';
 import { UpdateOrganizationDto } from './dtos/update-organization.dto';
-
-interface CreateOrganizationParams {
-  slug?: string;
-  attributes?: Record<string, unknown>;
-}
 
 @Injectable()
 export class OrganizationsService {
   private readonly logger = new Logger(OrganizationsService.name);
-  private readonly clerkClient: ClerkClient;
+  private readonly clerk: ClerkClient;
   private readonly permit: Permit;
 
   constructor(private readonly configService: ConfigService) {
@@ -30,7 +26,7 @@ export class OrganizationsService {
       'CLERK_PUBLISHABLE_KEY',
     );
 
-    this.clerkClient = createClerkClient({
+    this.clerk = createClerkClient({
       secretKey,
       publishableKey,
     });
@@ -38,28 +34,37 @@ export class OrganizationsService {
     this.permit = new Permit({
       pdp: this.configService.get<string>('PERMITIO_PDP'),
       token: this.configService.get<string>('PERMITIO_SECRET_KEY'),
+      throwOnError: false,
+      multiTenancy: {
+        useDefaultTenantIfEmpty: true,
+      },
     });
   }
 
-  async create(
-    userId: string,
-    name: string,
-    maxUsers: number,
-    params?: CreateOrganizationParams,
-  ): Promise<Organization> {
+  async create({
+    userId,
+    name,
+    maxUsers,
+    slug,
+    attributes,
+  }: CreateOrganizationDto): Promise<Organization> {
     try {
-      const organization =
-        await this.clerkClient.organizations.createOrganization({
+      let organization = await this.getUserOrganization(userId);
+      if (!organization) {
+        organization = await this.clerk.organizations.createOrganization({
           name,
           createdBy: userId,
           maxAllowedMemberships: maxUsers,
-          slug: params.slug,
+          slug,
+          privateMetadata: attributes,
         });
+      }
 
-      await this.createPermitTenant(organization.id, name, {
-        ...params.attributes,
+      await this.syncTenant(organization.id, name, {
+        ...attributes,
         maxUserLicensesCount: maxUsers,
       });
+
       return organization;
     } catch (error) {
       this.logger.error(error);
@@ -67,19 +72,27 @@ export class OrganizationsService {
     }
   }
 
-  private async createPermitTenant(
+  private async syncTenant(
     organizationId: string,
     name: string,
     attributes?: Record<string, unknown>,
   ): Promise<void> {
     try {
-      await this.permit.api.tenants.get(organizationId);
+      const tenant = await this.permit.api.tenants.get(organizationId);
+      if (tenant) {
+        await this.permit.api.tenants.update(organizationId, {
+          name,
+          attributes,
+        });
+      }
     } catch (error) {
-      await this.permit.api.tenants.create({
-        key: organizationId,
-        name,
-        attributes,
-      });
+      if (error instanceof PermitApiError)
+        await this.permit.api.tenants.create({
+          key: organizationId,
+          name,
+          attributes,
+        });
+      else this.logger.error(error);
     }
   }
 
@@ -88,35 +101,50 @@ export class OrganizationsService {
     name,
     maxUsers,
     slug,
+    attributes,
   }: UpdateOrganizationDto): Promise<Organization> {
     try {
-      return await this.clerkClient.organizations.updateOrganization(id, {
+      const organization = await this.clerk.organizations.updateOrganization(
+        id,
+        {
+          name,
+          maxAllowedMemberships: maxUsers,
+          slug,
+        },
+      );
+
+      await this.permit.api.tenants.update(id, {
         name,
-        maxAllowedMemberships: maxUsers,
-        slug,
+        attributes: { ...attributes, maxUserLicensesCount: maxUsers },
       });
+
+      return organization;
     } catch (error) {
       this.logger.error(error);
+      throw error;
     }
   }
 
   async get(organizationId: string): Promise<Organization> {
     try {
-      return await this.clerkClient.organizations.getOrganization({
+      return await this.clerk.organizations.getOrganization({
         organizationId,
       });
     } catch (error) {
       this.logger.error(error);
+      throw error;
     }
   }
 
   async getUserOrganization(userId: string): Promise<Organization | undefined> {
     try {
-      const { data } =
-        await this.clerkClient.users.getOrganizationMembershipList({ userId });
+      const { data } = await this.clerk.users.getOrganizationMembershipList({
+        userId,
+      });
       return data[0]?.organization;
     } catch (error) {
       this.logger.error(error);
+      throw error;
     }
   }
 
@@ -126,7 +154,7 @@ export class OrganizationsService {
   ): Promise<PaginatedResource<string>> {
     try {
       const { data, totalCount } =
-        await this.clerkClient.organizations.getOrganizationMembershipList({
+        await this.clerk.organizations.getOrganizationMembershipList({
           organizationId,
           limit: pagination.limit,
           offset: pagination.offset,
@@ -138,6 +166,7 @@ export class OrganizationsService {
       );
     } catch (error) {
       this.logger.error(error);
+      throw error;
     }
   }
 
@@ -148,7 +177,7 @@ export class OrganizationsService {
   ): Promise<PaginatedResource<OrganizationInvitation>> {
     try {
       const { data, totalCount } =
-        await this.clerkClient.organizations.getOrganizationInvitationList({
+        await this.clerk.organizations.getOrganizationInvitationList({
           organizationId,
           status,
           limit: pagination.limit,
@@ -157,6 +186,7 @@ export class OrganizationsService {
       return new PaginatedResource(data, totalCount, pagination.offset);
     } catch (error) {
       this.logger.error(error);
+      throw error;
     }
   }
 
@@ -167,7 +197,7 @@ export class OrganizationsService {
     role = Role.member,
   ): Promise<OrganizationInvitation> {
     try {
-      return await this.clerkClient.organizations.createOrganizationInvitation({
+      return await this.clerk.organizations.createOrganizationInvitation({
         emailAddress: email,
         inviterUserId,
         organizationId,
@@ -175,6 +205,7 @@ export class OrganizationsService {
       });
     } catch (error) {
       this.logger.error(error);
+      throw error;
     }
   }
 
@@ -184,13 +215,14 @@ export class OrganizationsService {
     userId: string,
   ): Promise<OrganizationInvitation> {
     try {
-      return await this.clerkClient.organizations.revokeOrganizationInvitation({
+      return await this.clerk.organizations.revokeOrganizationInvitation({
         invitationId,
         organizationId,
         requestingUserId: userId,
       });
     } catch (error) {
       this.logger.error(error);
+      throw error;
     }
   }
 }

@@ -1,5 +1,13 @@
-import { IsDate, IsInstance, ValidateIf } from 'class-validator';
+import { Type } from 'class-transformer';
+import {
+  IsArray,
+  IsDate,
+  IsInstance,
+  ValidateIf,
+  ValidateNested,
+} from 'class-validator';
 import { CustomerDto } from './customer.dto';
+import { EntitlementDto } from './entitlement.dto';
 import { SubscriptionStatus } from './subscription-status';
 import { UserDto } from './user.dto';
 
@@ -16,4 +24,9 @@ export class SubscriptionUpdatedDto {
 
   @IsDate()
   expiresAt?: Date;
+
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => EntitlementDto)
+  entitlements: EntitlementDto[];
 }

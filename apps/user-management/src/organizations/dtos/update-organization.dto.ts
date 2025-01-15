@@ -10,6 +10,8 @@ export class UpdateOrganizationDto {
 
   maxUsers?: number;
 
+  attributes?: Record<string, unknown>;
+
   get slug(): string | undefined {
     return this.name ? StringUtils.kebabize(this.name) : undefined;
   }

@@ -10,7 +10,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { Request } from 'express';
 import { Webhook as SvixWebhook } from 'svix';
-import { PermissionsService } from '../permissions/permissions.service';
+import { UsersService } from '../users/users.service';
 
 @Controller('webhooks')
 export class WebhooksController {
@@ -19,7 +19,7 @@ export class WebhooksController {
 
   constructor(
     private readonly configService: ConfigService,
-    private readonly permissionService: PermissionsService,
+    private readonly usersService: UsersService,
   ) {
     this.clerkWebhook = new SvixWebhook(
       this.configService.get<string>('CLERK_SIGNING_SECRET'),
